@@ -1,0 +1,123 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: write     # needed to create releases and upload assets
+  checks: write      # needed to publish a check run
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        id: build
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+          echo "status=0" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Detect build result and extract logs
+        id: logs
+        run: |
+          set -e
+          LOG_FILE=build.log
+          # Tail of the log for the commit comment (keep it compact but useful)
+          TAIL=$(tail -n 80 "$LOG_FILE" || true)
+          # Escape the tail for JSON so we can pass it to later steps
+          TAIL_JSON=$(printf '%s' "$TAIL" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
+          echo "tail_json=$TAIL_JSON" >> "$GITHUB_OUTPUT"
+          # Locate APK
+          APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" -type f | head -n 1 || true)
+          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
+          if [ -z "$APK_PATH" ]; then
+            echo "build_ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build_ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create prerelease and upload APK
+        if: steps.logs.outputs.build_ok == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "dev-${{ github.sha }}"
+          name: "Dev build ${{ github.sha }}"
+          prerelease: true
+          target_commitish: "${{ github.sha }}"
+          body: |
+            Automated debug build for commit ${{ github.sha }} (${{ github.event.head_commit.message }}).
+
+            **Status:** ✅ Build succeeded.
+            **Branch:** `${{ github.ref_name }}`
+            **Actor:** @${{ github.actor }}
+          files: |
+            ${{ steps.logs.outputs.apk_path }}
+            build.log
+
+      - name: Create failure prerelease (no APK, logs only)
+        if: steps.logs.outputs.build_ok != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "dev-${{ github.sha }}"
+          name: "Dev build ${{ github.sha }} (FAILED)"
+          prerelease: true
+          target_commitish: "${{ github.sha }}"
+          body: |
+            Automated debug build for commit ${{ github.sha }} (${{ github.event.head_commit.message }}).
+
+            **Status:** ❌ Build failed. See `build.log` attached to this release for details.
+          files: build.log
+
+      - name: Comment build result on commit
+        uses: peter-evans/commit-comment@v3
+        with:
+          sha: ${{ github.sha }}
+          body: |
+            ### 🤖 Android CI build result for ${{ github.sha }}
+
+            **Status:** ${{ steps.logs.outputs.build_ok == 'true' && '✅ BUILD SUCCESS' || '❌ BUILD FAILED' }}
+            **Actor:** @${{ github.actor }}
+            **Release:** https://github.com/${{ github.repository }}/releases/tag/dev-${{ github.sha }}
+
+            <details><summary>Last 80 lines of build log (full log attached to the release above)</summary>
+
+            ```
+            ${{ steps.logs.outputs.tail_json }}
+            ```
+
+            </details>
+
+      - name: Fail the job if build broke
+        if: steps.logs.outputs.build_ok != 'true'
+        run: |
+          echo "::error::Gradle assembleDebug failed. See the prerelease for the full log."
+          exit 1

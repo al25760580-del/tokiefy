@@ -1,12 +1,18 @@
-*.iml
+# Gradle
 .gradle/
-/local.properties
-/.idea/
-.DS_Store
-/build/
-/captures/
+build/
+app/build/
+local.properties
+*.iml
+.idea/
+captures/
 .externalNativeBuild/
 .cxx/
-app/build/
 *.apk
 *.aab
+.DS_Store
+
+# Keep wrapper jar in the repo (GitHub Actions needs it)
+!gradle/wrapper/gradle-wrapper.jar
+!gradlew
+!gradlew.bat
