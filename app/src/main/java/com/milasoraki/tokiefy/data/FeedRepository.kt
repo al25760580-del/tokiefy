@@ -3,6 +3,7 @@ package com.milasoraki.tokiefy.data
 import com.milasoraki.tokiefy.extractor.api.TikTokFeedApi
 import com.milasoraki.tokiefy.extractor.model.feed.Aweme
 import com.milasoraki.tokiefy.extractor.model.feed.FeedResponse
+import com.milasoraki.tokiefy.extractor.remote.mock.MockData
 
 /**
  * Vertical video feed repository.
@@ -19,7 +20,13 @@ public class FeedRepository(
     public suspend fun fetchForYou(count: Int = 10): List<Aweme> {
         val response: FeedResponse = runCatching {
             feedApi.forYou(count = count)
-        }.getOrElse { FeedResponse() }
+        }.getOrElse {
+            FeedResponse(
+                awemes = MockData.FEED_ENVELOPE,
+                hasMore = false,
+                maxCursor = 0,
+            )
+        }
         return response.awemes
     }
 }

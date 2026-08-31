@@ -78,9 +78,19 @@ story</string>
     <string name="time_unit_hour">h</string>
     <string name="time_unit_day">d</string>
 
+    <!-- Login -->
+    <string name="login_subtitle">Sign in to load your real TikTok feed, or continue with sample data.</string>
+    <string name="login_sessionid_hint">Paste your sessionid cookie</string>
+    <string name="login_help">In a browser where you are logged into TikTok, open DevTools → Application → Cookies → tiktok.com → copy the value of the \'sessionid\' cookie.</string>
+    <string name="login_action_signin">Sign in</string>
+    <string name="login_action_continue_mock">Continue without signing in (sample data)</string>
+
     <!-- Errors -->
     <string name="error_generic">Something went wrong</string>
     <string name="error_network">Check your connection and try again</string>
+
+    <!-- Home empty state -->
+    <string name="feed_empty">No videos yet</string>
 
     <!-- Shared video -->
     <string name="video_share_title">Susie\'s Idea</string>

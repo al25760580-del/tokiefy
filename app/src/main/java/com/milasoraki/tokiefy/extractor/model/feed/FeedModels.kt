@@ -44,4 +44,8 @@ public data class FeedResponse(
     @Json(name = "max_cursor") val maxCursor: Long = 0,
 )
 
-private fun ImageUrl.firstUrl(): String? = urlList.firstOrNull()
+/** Returns the first available cover URL or null. */
+public fun Video.coverUrl(): String? = cover?.urlList?.firstOrNull()
+
+/** Returns the first playable video URL or null. */
+public fun Video.playUrl(): String? = playAddress?.urlList?.firstOrNull()

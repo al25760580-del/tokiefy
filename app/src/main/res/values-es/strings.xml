@@ -78,9 +78,19 @@ historia</string>
     <string name="time_unit_hour">h</string>
     <string name="time_unit_day">d</string>
 
+    <!-- Login -->
+    <string name="login_subtitle">Inicia sesión para cargar tu feed real, o continúa con datos de muestra.</string>
+    <string name="login_sessionid_hint">Pega tu cookie sessionid</string>
+    <string name="login_help">En un navegador con tu sesión abierta, DevTools → Application → Cookies → tiktok.com → copia el valor de la cookie \'sessionid\'.</string>
+    <string name="login_action_signin">Iniciar sesión</string>
+    <string name="login_action_continue_mock">Continuar sin iniciar sesión (datos de muestra)</string>
+
     <!-- Errors -->
     <string name="error_generic">Algo salió mal</string>
     <string name="error_network">Revisa tu conexión e intenta de nuevo</string>
+
+    <!-- Home empty state -->
+    <string name="feed_empty">Aún no hay vídeos</string>
 
     <!-- Shared video -->
     <string name="video_share_title">Susie\'s Idea</string>

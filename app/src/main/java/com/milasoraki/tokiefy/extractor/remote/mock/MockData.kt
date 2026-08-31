@@ -249,21 +249,74 @@ internal object MockData {
     }
     """
 
+    const val SAMPLE_MP4_1: String =
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+    const val SAMPLE_MP4_2: String =
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+    const val SAMPLE_MP4_3: String =
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+
     const val FEED_RESPONSE: String = """
     {
       "aweme_list":[
         {"aweme_id":"aw_fake1","desc":"#fyp fun moment 🔥","create_time":0,
           "author":{"uid":"a1","unique_id":"creator_01","nickname":"Creator 01",
             "avatar_thumb":{"url_list":["https://i.pravatar.cc/200?img=13"]},"follower_count":420},
-          "video":{"play_addr":{"url_list":[]},
+          "video":{"play_addr":{"url_list":["$SAMPLE_MP4_1"]},
                   "cover":{"url_list":["https://picsum.photos/seed/t1/400/700"]}},
           "statistics":{"digg_count":12340,"comment_count":560,"share_count":780,
                         "collect_count":220,"play_count":980000}
+        },
+        {"aweme_id":"aw_fake2","desc":"second clip #viral",
+          "author":{"uid":"a2","unique_id":"creator_02","nickname":"Creator 02",
+            "avatar_thumb":{"url_list":["https://i.pravatar.cc/200?img=23"]},"follower_count":1024},
+          "video":{"play_addr":{"url_list":["$SAMPLE_MP4_2"]},
+                  "cover":{"url_list":["https://picsum.photos/seed/t2/400/700"]}},
+          "statistics":{"digg_count":4210,"comment_count":120,"share_count":88,
+                        "collect_count":44,"play_count":120000}
+        },
+        {"aweme_id":"aw_fake3","desc":"third video #fyp #trending",
+          "author":{"uid":"a3","unique_id":"creator_03","nickname":"Creator 03",
+            "avatar_thumb":{"url_list":["https://i.pravatar.cc/200?img=33"]},"follower_count":88000},
+          "video":{"play_addr":{"url_list":["$SAMPLE_MP4_3"]},
+                  "cover":{"url_list":["https://picsum.photos/seed/t3/400/700"]}},
+          "statistics":{"digg_count":98231,"comment_count":4203,"share_count":1002,
+                        "collect_count":500,"play_count":1200000}
         }
       ],
       "has_more":0,"max_cursor":0
     }
     """
+
+    val FEED_ENVELOPE: List<com.milasoraki.tokiefy.extractor.model.feed.Aweme> = listOf(
+        com.milasoraki.tokiefy.extractor.model.feed.Aweme(
+            awemeId = "aw_fake1", description = "#fyp fun moment 🔥",
+            author = user("a1", "creator_01", "Creator 01", 420, "img=13"),
+            video = com.milasoraki.tokiefy.extractor.model.feed.Video(
+                playAddress = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(listOf(SAMPLE_MP4_1)),
+                cover = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(listOf("https://picsum.photos/seed/t1/400/700")),
+            ),
+            statistics = com.milasoraki.tokiefy.extractor.model.feed.Statistics(12340, 560, 780),
+        ),
+        com.milasoraki.tokiefy.extractor.model.feed.Aweme(
+            awemeId = "aw_fake2", description = "second clip #viral",
+            author = user("a2", "creator_02", "Creator 02", 1024, "img=23"),
+            video = com.milasoraki.tokiefy.extractor.model.feed.Video(
+                playAddress = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(listOf(SAMPLE_MP4_2)),
+                cover = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(listOf("https://picsum.photos/seed/t2/400/700")),
+            ),
+            statistics = com.milasoraki.tokiefy.extractor.model.feed.Statistics(4210, 120, 88),
+        ),
+        com.milasoraki.tokiefy.extractor.model.feed.Aweme(
+            awemeId = "aw_fake3", description = "third video #fyp #trending",
+            author = user("a3", "creator_03", "Creator 03", 88000, "img=33"),
+            video = com.milasoraki.tokiefy.extractor.model.feed.Video(
+                playAddress = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(listOf(SAMPLE_MP4_3)),
+                cover = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(listOf("https://picsum.photos/seed/t3/400/700")),
+            ),
+            statistics = com.milasoraki.tokiefy.extractor.model.feed.Statistics(98231, 4203, 1002),
+        ),
+    )
 
     const val OK: String = """{"status_code":0,"status_msg":"ok"}"""
 

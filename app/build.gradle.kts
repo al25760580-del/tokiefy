@@ -52,21 +52,30 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    // Extended Material icon set is required — ChatScreen and the feed
-    // side rail use icons that are not in material-icons-core (Mic, Send,
-    // Search Outlined, FavoriteBorder, Bookmark, PersonAdd, TrendingUp, …).
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.foundation:foundation")
     implementation("io.coil-kt:coil-compose:2.5.0")
 
-    // Retrofit + OkHttp + Moshi (TikTok API client, tal como se documenta: X-SS-STUB = MD5(body))
+    // Media3 (ExoPlayer) for vertical TikTok-style video playback
+    val media3 = "1.2.1"
+    implementation("androidx.media3:media3-exoplayer:$media3")
+    implementation("androidx.media3:media3-ui:$media3")
+    implementation("androidx.media3:media3-common:$media3")
+
+    // Accompanist VerticalPager for the For-You swipable feed
+    implementation("com.google.accompanist:accompanist-pager:0.32.0")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.32.0")
+
+    // Retrofit + OkHttp + Moshi
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
     implementation("com.squareup.moshi:moshi:1.15.0")
