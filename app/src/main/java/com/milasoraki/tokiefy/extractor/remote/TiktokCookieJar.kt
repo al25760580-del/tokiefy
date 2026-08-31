@@ -152,6 +152,6 @@ public class TiktokCookieJar(
 
     private companion object {
         private val KEY_RAW_COOKIES = stringPreferencesKey("raw_cookies")
-        private val Context.cookieDataStore by preferencesDataStore(name = "tokiefy_session")
+        private val Context.cookieDataStore by preferencesDataStore(name = "tokiefy_cookies")
     }
 }
