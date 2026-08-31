@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,12 +72,15 @@ public fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
     // (i.e. right after the WebView grabs a cookie), re-fetch the feed so
     // the LIVE data replaces the SAMPLE cards without needing an app restart.
     LaunchedEffect(Unit) {
-        val loggedIn = ServiceLocator.sessionManager.isLoggedIn()
+        var wasLoggedIn = false
         ServiceLocator.sessionManager.session.collect { session ->
-            val nowLoggedIn = session.cookies.any { it.name == "sessionid" && it.value.length >= 16 && it.value != "0" }
-            if (nowLoggedIn != loggedIn) {
+            val nowLoggedIn = session.cookies.any {
+                it.name == "sessionid" && it.value.length >= 16 && it.value != "0"
+            }
+            if (nowLoggedIn && !wasLoggedIn) {
                 viewModel.refresh()
             }
+            wasLoggedIn = nowLoggedIn
         }
     }
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
