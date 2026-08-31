@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
@@ -207,7 +208,7 @@ private fun NotificationCard(notification: InboxNotification, onDismiss: () -> U
                     )
                 }
                 IconButton(onClick = {}) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_camera), tint = Color.White)
+                    Icon(Icons.Filled.CameraAlt, contentDescription = stringResource(R.string.action_camera), tint = Color.White)
                 }
             }
         }

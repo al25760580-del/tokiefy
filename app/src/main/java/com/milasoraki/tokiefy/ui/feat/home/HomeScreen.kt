@@ -1,6 +1,5 @@
 package com.milasoraki.tokiefy.ui.feat.home
 
-import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -233,6 +232,6 @@ private fun sampleItem(): Aweme = Aweme(description = "#fyp #viral #foryou")
 @Composable
 private fun Modifier.tapNoRipple(onClick: () -> Unit): Modifier = this.clickable(
     interactionSource = remember { MutableInteractionSource() },
-    indication = null as Indication?,
+    indication = null,
     onClick = onClick,
 )

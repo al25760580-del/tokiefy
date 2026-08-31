@@ -31,8 +31,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
@@ -472,7 +474,7 @@ private fun ChatInputBar(
         ) {
             IconButton(onClick = {}) {
                 Icon(
-                    Icons.Filled.Add,
+                    Icons.Filled.CameraAlt,
                     contentDescription = stringResource(R.string.action_camera),
                     tint = Color.White,
                     modifier = Modifier.size(26.dp),
@@ -504,7 +506,7 @@ private fun ChatInputBar(
             }
             IconButton(onClick = onToggleStickers) {
                 Icon(
-                    Icons.Filled.KeyboardArrowDown,
+                    Icons.Filled.Keyboard,
                     contentDescription = stringResource(R.string.chat_action_keyboard),
                     tint = Color.White,
                     modifier = Modifier.size(26.dp),
@@ -520,7 +522,7 @@ private fun ChatInputBar(
             }
             IconButton(onClick = {}) {
                 Icon(
-                    Icons.Filled.Call,
+                    Icons.Filled.Mic,
                     contentDescription = stringResource(R.string.chat_action_mic),
                     tint = Color.White,
                     modifier = Modifier.size(26.dp),
