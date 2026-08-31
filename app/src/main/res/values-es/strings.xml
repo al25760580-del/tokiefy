@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">Tokiefy</string>
+
+    <!-- Tabs -->
+    <string name="tab_home">Inicio</string>
+    <string name="tab_friends">Amigos</string>
+    <string name="tab_inbox">Inbox</string>
+    <string name="tab_profile">Perfil</string>
+    <string name="action_create">Crear</string>
+
+    <!-- Home (For You) -->
+    <string name="feed_tab_following">Siguiendo</string>
+    <string name="feed_tab_for_you">Para ti</string>
+    <string name="feed_default_hashtags">#fyp #viral #parati</string>
+    <string name="video_original_sound">sonido original</string>
+    <string name="action_follow">Seguir</string>
+    <string name="action_comments">Comentarios</string>
+    <string name="action_save">Guardado</string>
+    <string name="action_share">Compartir</string>
+
+    <!-- Friends / Profile placeholders -->
+    <string name="friends_title">Amigos</string>
+    <string name="friends_subtitle">Vídeos de personas que sigues</string>
+    <string name="profile_title">Perfil</string>
+    <string name="profile_subtitle">Tus vídeos, me gusta y ajustes</string>
+
+    <!-- Inbox -->
+    <string name="inbox_co_plus">co+</string>
+    <string name="inbox_title">Inbox</string>
+    <string name="menu_back">Volver</string>
+    <string name="menu_more">Más</string>
+    <string name="menu_call">Llamar</string>
+    <string name="menu_search">Buscar</string>
+    <string name="dismiss">Cerrar</string>
+    <string name="action_camera">Cámara</string>
+    <string name="banner_followers_title">Nuevos seguidores</string>
+    <string name="banner_followers_body">Tienes nuevos seguidores esta semana</string>
+    <string name="activity_title">Actividad</string>
+    <string name="activity_body">Nuevas interacciones: %1$s</string>
+    <string name="story_compose_prompt">Tu
+historia</string>
+    <string name="user_unknown">Desconocido</string>
+
+    <!-- Chat -->
+    <string name="chat_active_now">Activo/a ahora</string>
+    <string name="chat_active_today">Activo/a hoy</string>
+    <string name="chat_timestamp_today">hoy %1$s</string>
+    <string name="chat_input_placeholder">Mensaje…</string>
+    <string name="chat_action_keyboard">Teclado</string>
+    <string name="chat_action_stickers">Stickers</string>
+    <string name="chat_action_mic">Nota de voz</string>
+    <string name="chat_action_send">Enviar</string>
+
+    <!-- Stickers -->
+    <string name="stickers_recent">Usados recientemente</string>
+    <string name="stickers_saved">Guardado</string>
+    <string name="stickers_add">Añadir paquete</string>
+    <string name="sticker_name_sticker">Sticker</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_avatar">Foto de perfil</string>
+    <string name="cd_unread_badge">Mensajes sin leer</string>
+    <string name="cd_story_ring">Historia</string>
+    <string name="cd_play_video">Reproducir vídeo</string>
+    <string name="cd_video_share">Vídeo compartido</string>
+
+    <!-- Relative time (Spanish, Mexico) -->
+    <string name="time_sent_moment">Se envió hace un momento</string>
+    <string name="time_ago_moment">hace un momento</string>
+    <string name="time_shared_moment">compartió un video · ahora</string>
+    <string name="time_sent_pattern">Se envió hace %1$d %2$s</string>
+    <string name="time_ago_pattern">hace %1$d %2$s</string>
+    <string name="time_shared_pattern">compartió un video · %1$d %2$s</string>
+    <string name="time_unit_minute">min</string>
+    <string name="time_unit_hour">h</string>
+    <string name="time_unit_day">d</string>
+
+    <!-- Errors -->
+    <string name="error_generic">Algo salió mal</string>
+    <string name="error_network">Revisa tu conexión e intenta de nuevo</string>
+
+    <!-- Shared video -->
+    <string name="video_share_title">Susie\'s Idea</string>
+    <string name="video_share_author">Ralsei</string>
+</resources>
