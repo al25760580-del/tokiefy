@@ -5,13 +5,17 @@ import okhttp3.Interceptor
 import okhttp3.Response
 
 /**
- * Adds session-level headers: Cookie, X-CSRFToken and persistent device id.
+ * Adds session-level HEADERS (not cookies — those live in the shared
+ * TiktokCookieJar). Specifically:
+ *   - `X-CSRFToken` copied from the session's csrf token, which the
+ *     server expects on mutating POSTs.
  *
- * Why it exists:
- * Authenticated POSTs require the `Cookie` header carrying `sessionid`
- * (and friends) plus an `X-CSRFToken` header copied from the cookie jar.
- * The csrf token is omitted until the cookie jar contains one, so
- * unauthenticated or first-login calls do not carry a bogus token.
+ * Cookies are handled by the shared [com.milasoraki.tokiefy.extractor.remote.TiktokCookieJar]
+ * so they are set, stored and updated according to RFC 6265 across
+ * HTTP clients (native + web) automatically. Previously we tried to
+ * build the Cookie header manually here which produced duplicates and
+ * prevented cookies set by HTTP responses (msToken, odin_tt, ttwid,
+ * Set-Cookie rotators from anti-bot) from being echoed back.
  */
 public class SessionHeadersInterceptor(
     private val sessionHolder: SessionHolder,
@@ -19,11 +23,6 @@ public class SessionHeadersInterceptor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val session = sessionHolder.get()
         val builder = chain.request().newBuilder()
-        val cookieHeader: String = session.cookies
-            .joinToString("; ") { "${it.name}=${it.value}" }
-        if (cookieHeader.isNotBlank()) {
-            builder.header("Cookie", cookieHeader)
-        }
         if (session.csrfToken.isNotBlank()) {
             builder.header("X-CSRFToken", session.csrfToken)
         }

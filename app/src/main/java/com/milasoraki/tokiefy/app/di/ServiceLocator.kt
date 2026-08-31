@@ -1,6 +1,7 @@
 package com.milasoraki.tokiefy.app.di
 
 import android.content.Context
+import android.webkit.CookieManager
 import com.milasoraki.tokiefy.data.ConversationRepository
 import com.milasoraki.tokiefy.data.FeedRepository
 import com.milasoraki.tokiefy.data.InteractionRepository
@@ -18,24 +19,13 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
- * Manual service locator (dependency container).
+ * Manual service locator.
  *
- * Why a hand-rolled locator instead of Hilt/Koin:
- *
- * | Option        | Pros                                    | Cons                                  |
- * |---------------|-----------------------------------------|---------------------------------------|
- * | Hilt          | Standard, scoped, compile-time-checked  | Heavy annotation processing; kapt     |
- * | Koin          | Lightweight, no kapt                    | Runtime errors on missing bindings    |
- * | Manual (this) | Zero dependencies; no magic; easy to read | More boilerplate when adding deps |
- *
- * Given the small codebase and the NewPipe-inspired philosophy of
- * explicit wiring, the manual locator keeps the dependency graph
- * visible at a glance.
- *
- * Lifecycle: [init] is called exactly once from [TokiefyApp.onCreate].
- * The coroutine scope immediately starts observing the [SessionManager]
- * so [SessionHolder] is always up-to-date. This means logging in or
- * out takes effect on the next API call without app restart.
+ * The single [com.milasoraki.tokiefy.extractor.remote.TiktokCookieJar]
+ * lives on [api] (`api.cookieJar`) and is shared between the native
+ * and web HTTP clients so cookies set by either lane (msToken, odin_tt,
+ * ttwid) are replayed on subsequent requests — required for TikTok's
+ * anti-bot challenge flow.
  */
 public object ServiceLocator {
 
@@ -69,7 +59,7 @@ public object ServiceLocator {
         appContext = context.applicationContext
         sessionManager = manager
         sessionHolder = SessionHolder()
-        api = TikTokApi.create(sessionHolder = sessionHolder)
+        api = TikTokApi.create(context = appContext, sessionHolder = sessionHolder)
 
         feedRepository = FeedRepository(api.feed, api.nativeFeed)
         conversationRepository = ConversationRepository(api.messaging)
@@ -79,8 +69,17 @@ public object ServiceLocator {
         notificationRepository = NotificationRepository()
         interactionRepository = InteractionRepository(api.digg, api.relation)
 
+        // Whenever sessionManager signals a new session (WebView login
+        // completed or manual paste), merge its cookies into the shared
+        // CookieJar so OkHttp starts sending them on the next request.
         appScope.launch {
-            sessionManager.session.collectLatest { session -> sessionHolder.set(session) }
+            sessionManager.session.collectLatest { session ->
+                sessionHolder.set(session)
+                val raw = session.cookies
+                    .distinctBy { it.name }
+                    .joinToString("; ") { "${it.name}=${it.value}" }
+                if (raw.isNotBlank()) api.cookieJar.mergeFromWebView(raw)
+            }
         }
     }
 }
