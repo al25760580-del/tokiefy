@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import okhttp3.Cookie
+import okhttp3.HttpUrl
 
 /**
  * Persists the user's TikTok session.
@@ -31,6 +32,8 @@ public class SessionManager(
     private val context: Context,
 ) {
 
+    private val tiktokUrl: HttpUrl = HttpUrl.Builder().scheme("https").host("tiktok.com").build()
+
     private val dataStore: DataStore<Preferences> get() = context.sessionDataStore
 
     /** Hot flow of the current session; emits updates immediately. */
@@ -43,9 +46,9 @@ public class SessionManager(
             Session()
         } else {
             val cookies = mutableListOf<Cookie>()
-            cookies += Cookie.parse("https://tiktok.com", "sessionid=$sessionId")!!
+            Cookie.parse(tiktokUrl, "sessionid=$sessionId")?.let { cookies += it }
             if (csrf.isNotBlank()) {
-                cookies += Cookie.parse("https://tiktok.com", "csrftoken=$csrf")!!
+                Cookie.parse(tiktokUrl, "csrftoken=$csrf")?.let { cookies += it }
             }
             Session(
                 cookies = cookies,
@@ -60,8 +63,10 @@ public class SessionManager(
     public suspend fun current(): Session = session.first()
 
     /** True when the user has saved a non-blank session id. */
-    public suspend fun isLoggedIn(): Boolean = current().userId.isNotBlank() ||
-        current().cookies.any { it.name == "sessionid" && it.value.isNotBlank() }
+    public suspend fun isLoggedIn(): Boolean {
+        val s = current()
+        return s.userId.isNotBlank() || s.cookies.any { it.name == "sessionid" && it.value.isNotBlank() }
+    }
 
     /** Persists a session imported from the login screen. */
     public suspend fun saveSession(sessionId: String, uid: String = "", csrf: String = "", secUid: String = "") {

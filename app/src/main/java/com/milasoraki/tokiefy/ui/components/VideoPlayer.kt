@@ -16,9 +16,7 @@ import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
-import com.milasoraki.tokiefy.ui.theme.TikTokPrimary
 
 /**
  * Full-screen auto-looping video player.
@@ -48,7 +46,7 @@ public fun VideoPlayer(
     looping: Boolean = true,
 ) {
     val context = LocalContext.current
-    val player = remember(context) {
+    val exoPlayer = remember(context) {
         val dataSourceFactory = DefaultHttpDataSource.Factory()
             .setUserAgent(
                 "com.zhiliaoapp.musically/2023501030 (Linux; U; Android 13; en_US; Pixel 7; Build/TQ3A.230901.001; Cronet/TTNetVersion:b4d74d15 2023-09-01)",
@@ -65,27 +63,25 @@ public fun VideoPlayer(
 
     DisposableEffect(url) {
         if (!url.isNullOrBlank()) {
-            player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
-            player.prepare()
+            exoPlayer.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
+            exoPlayer.prepare()
         }
         onDispose {
-            player.stop()
-            player.clearMediaItems()
+            exoPlayer.stop()
+            exoPlayer.clearMediaItems()
         }
     }
     LaunchedEffect(isPlaying) {
         if (isPlaying) {
-            player.playWhenReady = true
-            player.play()
+            exoPlayer.playWhenReady = true
+            exoPlayer.play()
         } else {
-            player.pause()
-            player.playWhenReady = false
+            exoPlayer.pause()
+            exoPlayer.playWhenReady = false
         }
     }
     DisposableEffect(Unit) {
-        onDispose {
-            player.release()
-        }
+        onDispose { exoPlayer.release() }
     }
 
     AndroidView(
@@ -98,7 +94,7 @@ public fun VideoPlayer(
                 )
                 useController = false
                 setShutterBackgroundColor(android.graphics.Color.BLACK)
-                player = player
+                player = exoPlayer
             }
         },
     )

@@ -21,7 +21,7 @@ public data class Aweme(
     @Json(name = "statistics") val statistics: Statistics? = null,
 ) {
     /** Returns the first available cover URL or null. */
-    public fun coverUrl(): String? = video?.cover?.firstUrl()
+    public fun coverUrl(): String? = video?.coverUrl()
 }
 
 @JsonClass(generateAdapter = true)
