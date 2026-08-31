@@ -1,5 +1,16 @@
 package com.milasoraki.tokiefy.extractor.remote.mock
 
+import com.milasoraki.tokiefy.extractor.model.messaging.Conversation
+import com.milasoraki.tokiefy.extractor.model.messaging.ConversationListResponse
+import com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage
+import com.milasoraki.tokiefy.extractor.model.messaging.MessageListResponse
+import com.milasoraki.tokiefy.extractor.model.messaging.MessageType
+import com.milasoraki.tokiefy.extractor.model.sticker.Sticker
+import com.milasoraki.tokiefy.extractor.model.sticker.StickerPack
+import com.milasoraki.tokiefy.extractor.model.sticker.StickerStoreResponse
+import com.milasoraki.tokiefy.extractor.model.user.ImageUrl
+import com.milasoraki.tokiefy.extractor.model.user.User
+
 /**
  * Static canned data returned by [MockResponseInterceptor].
  *
@@ -17,54 +28,179 @@ package com.milasoraki.tokiefy.extractor.remote.mock
  */
 internal object MockData {
 
+    // ------------------------------------------------------------------
+    // Typed envelopes consumed by repository fallbacks.
+    // Declared FIRST so later `val`s can safely reference them; property
+    // initialization inside a Kotlin `object` is top-to-bottom.
+    // ------------------------------------------------------------------
+
+    data class ConversationEnvelope(
+        val conversations: List<Conversation> = emptyList(),
+    )
+    data class MessagesEnvelope(
+        val messages: List<DirectMessage> = emptyList(),
+    )
+
+    private fun user(uid: String, uniqueId: String, nickname: String, followers: Int, avatarSeed: String) = User(
+        uid = uid,
+        uniqueId = uniqueId,
+        nickname = nickname,
+        followerCount = followers,
+        avatarThumb = ImageUrl(urlList = listOf("https://i.pravatar.cc/200?u=$avatarSeed")),
+    )
+
+    private fun dm(id: String, sender: String, type: String, content: String, stickerId: String? = null,
+                   mediaUrl: String? = null, timeSec: Long) = DirectMessage(
+        messageId = id,
+        senderUid = sender,
+        type = type,
+        content = content,
+        stickerId = stickerId,
+        mediaUrl = mediaUrl,
+        createTimeEpochSeconds = timeSec,
+    )
+
+    private fun conv(id: String, user: User, lastMsg: DirectMessage, unread: Int, online: Boolean, lastSec: Long) =
+        Conversation(
+            conversationId = id,
+            otherUser = user,
+            lastMessage = lastMsg,
+            unreadCount = unread,
+            isOnline = online,
+            lastMsgSeconds = lastSec,
+        )
+
+    val CONVERSATIONS_ENVELOPE: ConversationEnvelope = ConversationEnvelope(
+        conversations = listOf(
+            conv(
+                id = "c_mielo",
+                user = user("u_mielo", "MieloVT", "MieloVT", 455, "mielo"),
+                lastMsg = dm("m_share1", "u_mielo", MessageType.AWEME_SHARE, "aweme:mielo1", timeSec = 120),
+                unread = 0, online = true, lastSec = 120,
+            ),
+            conv(
+                id = "c_misky",
+                user = user("u_misky", "misky", "` ｡", 87, "misky"),
+                lastMsg = dm("m_misky1", "u_misky", MessageType.AWEME_SHARE, "shared a video", timeSec = 7200),
+                unread = 0, online = false, lastSec = 7200,
+            ),
+            conv(
+                id = "c_ray",
+                user = user("u_ray", "ray", "ray", 12, "ray"),
+                lastMsg = dm("m_ray1", "u_ray", MessageType.TEXT, "Active today", timeSec = 14400),
+                unread = 0, online = false, lastSec = 14400,
+            ),
+            conv(
+                id = "c_joak",
+                user = user("u_joak", "joakoqwaanw1", "joakoqwaanw1", 3, "joak"),
+                lastMsg = dm("m_joak1", "u_joak", MessageType.TEXT, "Seen", timeSec = 28800),
+                unread = 0, online = false, lastSec = 28800,
+            ),
+            conv(
+                id = "c_dheyns",
+                user = user("u_dheyns", "Dheyns", "Dheyns", 230, "dheyns"),
+                lastMsg = dm("m_dheyns1", "u_dheyns", MessageType.AWEME_SHARE, "shared a video", timeSec = 75600),
+                unread = 2, online = false, lastSec = 75600,
+            ),
+            conv(
+                id = "c_ice",
+                user = user("u_ice", "ICE", "ICE", 512, "ice"),
+                lastMsg = dm("m_ice1", "u_ice", MessageType.TEXT, "Liked a post you commented on", timeSec = 90000),
+                unread = 1, online = false, lastSec = 90000,
+            ),
+        ),
+    )
+
+    val CONVERSATIONS_RESPONSE_TYPED: ConversationListResponse =
+        ConversationListResponse(conversations = CONVERSATIONS_ENVELOPE.conversations)
+
+    fun conversations(): ConversationEnvelope = CONVERSATIONS_ENVELOPE
+
+    fun messages(conversationId: String): MessagesEnvelope = MessagesEnvelope(
+        messages = listOf(
+            dm("${conversationId}_1", conversationId, MessageType.AWEME_SHARE, "aweme:share1", timeSec = 7200),
+            dm("${conversationId}_2", "me", MessageType.TEXT, "Haha what's up", timeSec = 3600),
+            DirectMessage(
+                messageId = "${conversationId}_3",
+                conversationId = conversationId,
+                senderUid = conversationId,
+                type = MessageType.STICKER,
+                content = "https://i.pravatar.cc/200?sticker=1",
+                stickerId = "stk_boom",
+                createTimeEpochSeconds = 600,
+            ),
+        ),
+    )
+
+    fun messagesTyped(conversationId: String): MessageListResponse =
+        MessageListResponse(messages = messages(conversationId).messages)
+
+    val STICKER_ENVELOPE: StickerStoreResponse = StickerStoreResponse(
+        recentStickers = listOf(
+            Sticker("stk_boom", "boom", "https://i.pravatar.cc/200?sticker=1"),
+            Sticker("stk_cat", "cat", "https://i.pravatar.cc/200?sticker=2"),
+            Sticker("stk_pizza", "pizza", "https://i.pravatar.cc/200?sticker=4"),
+            Sticker("stk_ham", "hamster", "https://i.pravatar.cc/200?sticker=5"),
+        ),
+        savedPacks = listOf(
+            StickerPack(
+                packId = "p_recent",
+                name = "Recent",
+                coverUrl = "https://i.pravatar.cc/100?sticker=1",
+                stickers = listOf(
+                    Sticker("stk_boom", "boom", "https://i.pravatar.cc/200?sticker=1"),
+                    Sticker("stk_cat", "cat", "https://i.pravatar.cc/200?sticker=2"),
+                    Sticker("stk_pizza", "pizza", "https://i.pravatar.cc/200?sticker=4"),
+                    Sticker("stk_ham", "hamster", "https://i.pravatar.cc/200?sticker=5"),
+                ),
+            ),
+        ),
+    )
+
+    fun stickerStore(): StickerStoreResponse = STICKER_ENVELOPE
+
+    // ------------------------------------------------------------------
+    // JSON strings returned over the wire by MockResponseInterceptor.
+    // These must keep the exact snake_case keys Moshi expects, including
+    // fields (sec_uid, etc.) the real server sends even though our DTOs
+    // don't consume them.
+    // ------------------------------------------------------------------
+
     const val CONVERSATIONS_RESPONSE: String = """
     {
       "conversations":[
-        {
-          "conversation_id":"c_mielo","unread_count":0,"is_online":true,"last_msg_time":120,
+        {"conversation_id":"c_mielo","unread_count":0,"is_online":true,"last_msg_time":120,
           "user":{"uid":"u_mielo","unique_id":"MieloVT","nickname":"MieloVT","sec_uid":"sec_mielo",
             "avatar_thumb":{"url_list":["https://i.pravatar.cc/200?u=mielo"]},"follower_count":455},
           "last_message":{"message_id":"m_share1","sender_uid":"u_mielo","message_type":"aweme_share",
-            "content":"aweme:mielo1","create_time":120}
-        },
-        {
-          "conversation_id":"c_misky","unread_count":0,"is_online":false,"last_msg_time":7200,
+            "content":"aweme:mielo1","create_time":120}},
+        {"conversation_id":"c_misky","unread_count":0,"is_online":false,"last_msg_time":7200,
           "user":{"uid":"u_misky","unique_id":"misky","nickname":"` ｡","sec_uid":"sec_misky",
             "avatar_thumb":{"url_list":["https://i.pravatar.cc/200?u=misky"]},"follower_count":87},
           "last_message":{"message_id":"m_misky1","sender_uid":"u_misky","message_type":"aweme_share",
-            "content":"shared a video","create_time":7200}
-        },
-        {
-          "conversation_id":"c_ray","unread_count":0,"is_online":false,"last_msg_time":14400,
+            "content":"shared a video","create_time":7200}},
+        {"conversation_id":"c_ray","unread_count":0,"is_online":false,"last_msg_time":14400,
           "user":{"uid":"u_ray","unique_id":"ray","nickname":"ray","sec_uid":"sec_ray",
             "avatar_thumb":{"url_list":["https://i.pravatar.cc/200?u=ray"]},"follower_count":12},
           "last_message":{"message_id":"m_ray1","sender_uid":"u_ray","message_type":"text",
-            "content":"Active today","create_time":14400}
-        },
-        {
-          "conversation_id":"c_joak","unread_count":0,"is_online":false,"last_msg_time":28800,
+            "content":"Active today","create_time":14400}},
+        {"conversation_id":"c_joak","unread_count":0,"is_online":false,"last_msg_time":28800,
           "user":{"uid":"u_joak","unique_id":"joakoqwaanw1","nickname":"joakoqwaanw1","sec_uid":"sec_joak",
             "avatar_thumb":{"url_list":["https://i.pravatar.cc/200?u=joak"]},"follower_count":3},
           "last_message":{"message_id":"m_joak1","sender_uid":"u_joak","message_type":"text",
-            "content":"Seen","create_time":28800}
-        },
-        {
-          "conversation_id":"c_dheyns","unread_count":2,"is_online":false,"last_msg_time":75600,
+            "content":"Seen","create_time":28800}},
+        {"conversation_id":"c_dheyns","unread_count":2,"is_online":false,"last_msg_time":75600,
           "user":{"uid":"u_dheyns","unique_id":"Dheyns","nickname":"Dheyns","sec_uid":"sec_dheyns",
             "avatar_thumb":{"url_list":["https://i.pravatar.cc/200?u=dheyns"]},"follower_count":230},
           "last_message":{"message_id":"m_dheyns1","sender_uid":"u_dheyns","message_type":"aweme_share",
-            "content":"shared a video","create_time":75600}
-        },
-        {
-          "conversation_id":"c_ice","unread_count":1,"is_online":false,"last_msg_time":90000,
+            "content":"shared a video","create_time":75600}},
+        {"conversation_id":"c_ice","unread_count":1,"is_online":false,"last_msg_time":90000,
           "user":{"uid":"u_ice","unique_id":"ICE","nickname":"ICE","sec_uid":"sec_ice",
             "avatar_thumb":{"url_list":["https://i.pravatar.cc/200?u=ice"]},"follower_count":512},
           "last_message":{"message_id":"m_ice1","sender_uid":"u_ice","message_type":"text",
-            "content":"Liked a post you commented on","create_time":90000}
-        }
+            "content":"Liked a post you commented on","create_time":90000}}
       ],
-      "has_more":0,
-      "cursor":0
+      "has_more":0,"cursor":0
     }
     """
 
@@ -84,179 +220,6 @@ internal object MockData {
       "has_more":0,"cursor":0
     }
     """
-
-    fun conversations(): ConversationEnvelope = CONVERSATIONS_ENVELOPE
-    val CONVERSATIONS_RESPONSE_TYPED: com.milasoraki.tokiefy.extractor.model.messaging.ConversationListResponse =
-        com.milasoraki.tokiefy.extractor.model.messaging.ConversationListResponse(
-            conversations = CONVERSATIONS_ENVELOPE.conversations,
-        )
-    fun messagesTyped(conversationId: String): com.milasoraki.tokiefy.extractor.model.messaging.MessageListResponse =
-        com.milasoraki.tokiefy.extractor.model.messaging.MessageListResponse(
-            messages = messages(conversationId).messages,
-        )
-    fun messages(conversationId: String): MessagesEnvelope = MessagesEnvelope(
-        messages = listOf(
-            com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage(
-                messageId = "${conversationId}_1",
-                conversationId = conversationId,
-                senderUid = conversationId,
-                type = com.milasoraki.tokiefy.extractor.model.messaging.MessageType.AWEME_SHARE,
-                content = "aweme:share1",
-                createTimeEpochSeconds = 7200,
-            ),
-            com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage(
-                messageId = "${conversationId}_2",
-                conversationId = conversationId,
-                senderUid = "me",
-                type = com.milasoraki.tokiefy.extractor.model.messaging.MessageType.TEXT,
-                content = "Haha what's up",
-                createTimeEpochSeconds = 3600,
-            ),
-            com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage(
-                messageId = "${conversationId}_3",
-                conversationId = conversationId,
-                senderUid = conversationId,
-                type = com.milasoraki.tokiefy.extractor.model.messaging.MessageType.STICKER,
-                stickerId = "stk_boom",
-                content = "https://i.pravatar.cc/200?sticker=1",
-                createTimeEpochSeconds = 600,
-            ),
-        ),
-    )
-    fun stickerStore(): com.milasoraki.tokiefy.extractor.model.sticker.StickerStoreResponse = STICKER_ENVELOPE
-
-    // Wire envelopes below are returned by MockResponseInterceptor (JSON)
-    // and must match the `@Json` names exactly. Typed envelopes above feed
-    // repositories when Moshi is bypassed by a getOrElse fallback.
-    data class ConversationEnvelope(
-        val conversations: List<com.milasoraki.tokiefy.extractor.model.messaging.Conversation> = emptyList(),
-    )
-    data class MessagesEnvelope(
-        val messages: List<com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage> = emptyList(),
-    )
-
-    val CONVERSATIONS_ENVELOPE: ConversationEnvelope = ConversationEnvelope(
-        conversations = listOf(
-            com.milasoraki.tokiefy.extractor.model.messaging.Conversation(
-                conversationId = "c_mielo",
-                otherUser = com.milasoraki.tokiefy.extractor.model.user.User(
-                    uid = "u_mielo", uniqueId = "MieloVT", nickname = "MieloVT",
-                    followerCount = 455,
-                    avatarThumb = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(
-                        urlList = listOf("https://i.pravatar.cc/200?u=mielo"),
-                    ),
-                ),
-                lastMessage = com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage(
-                    messageId = "m_share1", senderUid = "u_mielo",
-                    type = com.milasoraki.tokiefy.extractor.model.messaging.MessageType.AWEME_SHARE,
-                    content = "aweme:mielo1", createTimeEpochSeconds = 120,
-                ),
-                unreadCount = 0, isOnline = true, lastMsgSeconds = 120,
-            ),
-            com.milasoraki.tokiefy.extractor.model.messaging.Conversation(
-                conversationId = "c_misky",
-                otherUser = com.milasoraki.tokiefy.extractor.model.user.User(
-                    uid = "u_misky", uniqueId = "misky", nickname = "` ｡",
-                    followerCount = 87,
-                    avatarThumb = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(
-                        urlList = listOf("https://i.pravatar.cc/200?u=misky"),
-                    ),
-                ),
-                lastMessage = com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage(
-                    messageId = "m_misky1", senderUid = "u_misky",
-                    type = com.milasoraki.tokiefy.extractor.model.messaging.MessageType.AWEME_SHARE,
-                    content = "shared a video", createTimeEpochSeconds = 7200,
-                ),
-                unreadCount = 0, isOnline = false, lastMsgSeconds = 7200,
-            ),
-            com.milasoraki.tokiefy.extractor.model.messaging.Conversation(
-                conversationId = "c_ray",
-                otherUser = com.milasoraki.tokiefy.extractor.model.user.User(
-                    uid = "u_ray", uniqueId = "ray", nickname = "ray",
-                    followerCount = 12,
-                    avatarThumb = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(
-                        urlList = listOf("https://i.pravatar.cc/200?u=ray"),
-                    ),
-                ),
-                lastMessage = com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage(
-                    messageId = "m_ray1", senderUid = "u_ray",
-                    type = com.milasoraki.tokiefy.extractor.model.messaging.MessageType.TEXT,
-                    content = "Active today", createTimeEpochSeconds = 14400,
-                ),
-                unreadCount = 0, isOnline = false, lastMsgSeconds = 14400,
-            ),
-            com.milasoraki.tokiefy.extractor.model.messaging.Conversation(
-                conversationId = "c_joak",
-                otherUser = com.milasoraki.tokiefy.extractor.model.user.User(
-                    uid = "u_joak", uniqueId = "joakoqwaanw1", nickname = "joakoqwaanw1",
-                    followerCount = 3,
-                    avatarThumb = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(
-                        urlList = listOf("https://i.pravatar.cc/200?u=joak"),
-                    ),
-                ),
-                lastMessage = com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage(
-                    messageId = "m_joak1", senderUid = "u_joak",
-                    type = com.milasoraki.tokiefy.extractor.model.messaging.MessageType.TEXT,
-                    content = "Seen", createTimeEpochSeconds = 28800,
-                ),
-                unreadCount = 0, isOnline = false, lastMsgSeconds = 28800,
-            ),
-            com.milasoraki.tokiefy.extractor.model.messaging.Conversation(
-                conversationId = "c_dheyns",
-                otherUser = com.milasoraki.tokiefy.extractor.model.user.User(
-                    uid = "u_dheyns", uniqueId = "Dheyns", nickname = "Dheyns",
-                    followerCount = 230,
-                    avatarThumb = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(
-                        urlList = listOf("https://i.pravatar.cc/200?u=dheyns"),
-                    ),
-                ),
-                lastMessage = com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage(
-                    messageId = "m_dheyns1", senderUid = "u_dheyns",
-                    type = com.milasoraki.tokiefy.extractor.model.messaging.MessageType.AWEME_SHARE,
-                    content = "shared a video", createTimeEpochSeconds = 75600,
-                ),
-                unreadCount = 2, isOnline = false, lastMsgSeconds = 75600,
-            ),
-            com.milasoraki.tokiefy.extractor.model.messaging.Conversation(
-                conversationId = "c_ice",
-                otherUser = com.milasoraki.tokiefy.extractor.model.user.User(
-                    uid = "u_ice", uniqueId = "ICE", nickname = "ICE",
-                    followerCount = 512,
-                    avatarThumb = com.milasoraki.tokiefy.extractor.model.user.ImageUrl(
-                        urlList = listOf("https://i.pravatar.cc/200?u=ice"),
-                    ),
-                ),
-                lastMessage = com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage(
-                    messageId = "m_ice1", senderUid = "u_ice",
-                    type = com.milasoraki.tokiefy.extractor.model.messaging.MessageType.TEXT,
-                    content = "Liked a post you commented on", createTimeEpochSeconds = 90000,
-                ),
-                unreadCount = 1, isOnline = false, lastMsgSeconds = 90000,
-            ),
-        ),
-    )
-    val STICKER_ENVELOPE: com.milasoraki.tokiefy.extractor.model.sticker.StickerStoreResponse =
-        com.milasoraki.tokiefy.extractor.model.sticker.StickerStoreResponse(
-            recentStickers = listOf(
-                com.milasoraki.tokiefy.extractor.model.sticker.Sticker("stk_boom", "boom", "https://i.pravatar.cc/200?sticker=1"),
-                com.milasoraki.tokiefy.extractor.model.sticker.Sticker("stk_cat", "cat", "https://i.pravatar.cc/200?sticker=2"),
-                com.milasoraki.tokiefy.extractor.model.sticker.Sticker("stk_pizza", "pizza", "https://i.pravatar.cc/200?sticker=4"),
-                com.milasoraki.tokiefy.extractor.model.sticker.Sticker("stk_ham", "hamster", "https://i.pravatar.cc/200?sticker=5"),
-            ),
-            savedPacks = listOf(
-                com.milasoraki.tokiefy.extractor.model.sticker.StickerPack(
-                    packId = "p_recent",
-                    name = "Recent",
-                    coverUrl = "https://i.pravatar.cc/100?sticker=1",
-                    stickers = listOf(
-                        com.milasoraki.tokiefy.extractor.model.sticker.Sticker("stk_boom", "boom", "https://i.pravatar.cc/200?sticker=1"),
-                        com.milasoraki.tokiefy.extractor.model.sticker.Sticker("stk_cat", "cat", "https://i.pravatar.cc/200?sticker=2"),
-                        com.milasoraki.tokiefy.extractor.model.sticker.Sticker("stk_pizza", "pizza", "https://i.pravatar.cc/200?sticker=4"),
-                        com.milasoraki.tokiefy.extractor.model.sticker.Sticker("stk_ham", "hamster", "https://i.pravatar.cc/200?sticker=5"),
-                    ),
-                ),
-            ),
-        )
 
     const val STICKERS_RESPONSE: String = """
     {
