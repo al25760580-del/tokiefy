@@ -71,7 +71,8 @@ public fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
             modifier = Modifier.padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            val avatarUrl = state.account?.avatarThumb?.urlList?.firstOrNull()
+            val account = state.account
+            val avatarUrl = account?.avatarThumb?.urlList?.firstOrNull()
             AsyncImage(
                 model = avatarUrl ?: "https://picsum.photos/seed/me/120/120",
                 contentDescription = null,
@@ -80,16 +81,16 @@ public fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
             Text(
                 text = when {
                     state.loading -> stringResource(R.string.profile_loading)
-                    state.account != null -> "@${state.account.uniqueId ?: state.account.nickname ?: "user"}"
+                    account != null -> "@${account.uniqueId ?: account.nickname ?: "user"}"
                     else -> stringResource(R.string.profile_title)
                 },
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
             )
-            if (state.account != null) {
+            if (account != null) {
                 Text(
-                    text = "uid ${state.account.userId}",
+                    text = "uid ${account.userId}",
                     color = Color.White.copy(alpha = 0.5f),
                     fontSize = 12.sp,
                 )
