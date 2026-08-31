@@ -1,5 +1,6 @@
 package com.milasoraki.tokiefy.ui.components
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,20 +42,17 @@ import com.milasoraki.tokiefy.extractor.remote.NetworkDebugLogger
 /**
  * In-app HTTP debug console.
  *
- * Shows a scrollable, live-updating view of the NetworkDebugLogger ring
- * buffer plus the last request status and any uncaught error. Shown as
- * an overlay (callers decide when to show it; it does not install any
- * navigation of its own).
- *
- * Why an in-app console instead of asking the tester to read logcat:
- * the user is on a real phone, not a developer machine, and ADB is
- * typically unavailable when side-loading from a GitHub release.
+ * When [open] is false a small 🐞 button with a coloured status dot is
+ * rendered; when true a full-screen overlay shows the redacted log with
+ * copy/clear/close actions. Sensitive values (session cookies, X-Argus,
+ * X-Bogus, Authorization…) are masked before display and before being
+ * copied to the clipboard — only the first and last 4 characters are
+ * kept for debugging.
  */
 @Composable
 public fun DebugConsole(
     open: Boolean,
     onToggle: () -> Unit,
-    onClear: () -> Unit = { NetworkDebugLogger.clear() },
     modifier: Modifier = Modifier,
 ) {
     if (!open) {
@@ -69,7 +69,7 @@ public fun DebugConsole(
                 Icons.Filled.BugReport,
                 contentDescription = "Debug",
                 tint = dotColor,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(22.dp),
             )
         }
         return
@@ -78,6 +78,7 @@ public fun DebugConsole(
     val lines by NetworkDebugLogger.lines.collectAsState()
     val lastStatus by NetworkDebugLogger.lastStatus.collectAsState()
     val lastErr by NetworkDebugLogger.lastError.collectAsState()
+    val ctx = LocalContext.current
     val listState = rememberLazyListState()
 
     LaunchedEffect(lines.size) {
@@ -87,7 +88,7 @@ public fun DebugConsole(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xDD000000)),
+            .background(Color(0xEE000000)),
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
             Row(
@@ -118,7 +119,7 @@ public fun DebugConsole(
                         )
                         if (lastErr.isNotBlank()) {
                             Text(
-                                "ERROR: $lastErr",
+                                lastErr.take(160),
                                 color = Color(0xFFFF5252),
                                 fontSize = 10.sp,
                             )
@@ -126,8 +127,17 @@ public fun DebugConsole(
                     }
                 }
                 Row {
-                    TextButton(onClick = onClear) {
-                        Icon(Icons.Filled.Delete, contentDescription = null, tint = Color.White.copy(alpha = 0.6f))
+                    TextButton(onClick = {
+                        val msg = NetworkDebugLogger.copyToClipboard()
+                        Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+                    }) {
+                        Icon(Icons.Filled.ContentCopy, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.size(4.dp))
+                        Text("Copy", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp)
+                    }
+                    TextButton(onClick = { NetworkDebugLogger.clear() }) {
+                        Icon(Icons.Filled.Delete, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.size(4.dp))
                         Text("Clear", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
                     }
                     IconButton(onClick = onToggle) {
@@ -135,7 +145,13 @@ public fun DebugConsole(
                     }
                 }
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(2.dp))
+            Text(
+                "Tokens (sessionid, X-Argus, cookies…) se ocultan automáticamente antes de copiar.",
+                color = Color.White.copy(alpha = 0.45f),
+                fontSize = 9.sp,
+            )
+            Spacer(Modifier.height(4.dp))
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize()
@@ -174,16 +190,13 @@ private fun short(url: String): String {
 }
 
 private fun colorFor(line: String): Color = when {
-    line.startsWith("{") || line.startsWith("[") || line.startsWith("\"") || line.matches(Regex("^[a-zA-Z0-9_{}\"\\[\\],: -]+$")) && ":" in line ->
-        Color(0xFFBDBDBD)
     line.startsWith("-->") -> Color(0xFF64B5F6)
-    line.startsWith("<--") && (" 2" in line.substringAfter("<--").take(6)) -> Color(0xFF81C784)
-    line.startsWith("<--") && (" 4" in line.substringAfter("<--").take(6) || " 5" in line.substringAfter("<--").take(6)) -> Color(0xFFEF5350)
+    line.startsWith("<--") && line.substringAfter("<--").take(6).contains(" 2") -> Color(0xFF81C784)
+    line.startsWith("<--") && line.substringAfter("<--").take(6).let { it.contains(" 4") || it.contains(" 5") } -> Color(0xFFEF5350)
     line.startsWith("<--") -> Color(0xFFFFD54F)
     line.startsWith("ERROR:") -> Color(0xFFFF5252)
-    line.startsWith("D/") || line.startsWith("Content-") || line.startsWith("content-") -> Color(0xFFB0BEC5)
-    line.startsWith("set-cookie") || line.startsWith("Set-Cookie") || line.startsWith("cookie:") || line.startsWith("Cookie:") ->
-        Color(0xFFCE93D8)
+    line.startsWith("set-cookie", ignoreCase = true) || line.startsWith("cookie:", ignoreCase = true) -> Color(0xFFCE93D8)
+    line.matches(Regex("^\\s*(\"[^\"]+\"|\\w+): .+$")) && line.contains(":") -> Color(0xFFB0BEC5)
     else -> Color(0xFFEEEEEE)
 }
 

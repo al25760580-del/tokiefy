@@ -19,11 +19,15 @@ public class BrowserHeadersInterceptor : Interceptor {
         val request = chain.request().newBuilder()
             .header(
                 "User-Agent",
-                "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 " +
-                    "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+                "Mozilla/5.0 (Linux; Android 13; Pixel 5) AppleWebKit/537.36 " +
+                    "(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
             )
-            .header("Referer", "https://www.tiktok.com/")
-            .header("Accept-Language", "en-US,en;q=0.9")
+            .header("Referer", "https://www.tiktok.com/foryou")
+            .header("Accept", "application/json, text/plain, */*")
+            .header("Accept-Language", "es-419,es;q=0.9,en;q=0.8")
+            .header("Sec-Fetch-Site", "same-origin")
+            .header("Sec-Fetch-Mode", "cors")
+            .header("Sec-Fetch-Dest", "empty")
             .build()
         return chain.proceed(request)
     }

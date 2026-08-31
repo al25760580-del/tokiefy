@@ -5,6 +5,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.milasoraki.tokiefy.app.di.ServiceLocator
 import com.milasoraki.tokiefy.extractor.api.SessionManager
+import com.milasoraki.tokiefy.extractor.remote.NetworkDebugLogger
 
 /**
  * Application subclass.
@@ -17,6 +18,7 @@ public class TokiefyApp : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        NetworkDebugLogger.attach(this)
         val sessionManager = SessionManager(this)
         ServiceLocator.init(applicationContext, sessionManager)
     }

@@ -56,7 +56,9 @@ public class FeedRepository(
                 )
             }
             web.onFailure { err ->
-                NetworkDebugLogger.recordError("web FYP failed: ${err.message}")
+                NetworkDebugLogger.recordError(
+                    "web FYP failed [${err.javaClass.simpleName}]: ${err.message?.take(200)}",
+                )
             }
         }
 
