@@ -409,7 +409,7 @@ private fun parseCookies(raw: String): Map<String, String> {
 }
 
 /** UI mode for the login entry point. */
-private enum class LoginMode { Landing, Web, Manual }
+public enum class LoginMode { Landing, Web, Manual }
 
 /** UI state for the login screen. */
 public data class LoginUiState(
