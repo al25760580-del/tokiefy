@@ -1,6 +1,5 @@
 package com.milasoraki.tokiefy.data
 
-import com.milasoraki.tokiefy.app.di.ServiceLocator
 import com.milasoraki.tokiefy.extractor.api.TikTokFeedApi
 import com.milasoraki.tokiefy.extractor.model.feed.Aweme
 import com.milasoraki.tokiefy.extractor.model.feed.FeedResponse
@@ -15,7 +14,7 @@ import com.milasoraki.tokiefy.extractor.model.feed.FeedResponse
  * fallback, and (eventually) caching.
  */
 public class FeedRepository(
-    private val feedApi: TikTokFeedApi = ServiceLocator.feedApi,
+    private val feedApi: TikTokFeedApi,
 ) {
     public suspend fun fetchForYou(count: Int = 10): List<Aweme> {
         val response: FeedResponse = runCatching {

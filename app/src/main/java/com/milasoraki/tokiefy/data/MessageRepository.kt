@@ -1,12 +1,12 @@
 package com.milasoraki.tokiefy.data
 
-import com.milasoraki.tokiefy.app.di.ServiceLocator
 import com.milasoraki.tokiefy.extractor.api.TikTokMessagingApi
 import com.milasoraki.tokiefy.extractor.model.messaging.DirectMessage
 import com.milasoraki.tokiefy.extractor.model.messaging.MessageListResponse
 import com.milasoraki.tokiefy.extractor.model.messaging.SendMessageRequest
 import com.milasoraki.tokiefy.extractor.model.messaging.SendMessageResponse
 import com.milasoraki.tokiefy.extractor.model.messaging.SendStickerRequest
+import com.milasoraki.tokiefy.extractor.remote.mock.MockData
 
 /**
  * Per-conversation message repository.
@@ -17,7 +17,7 @@ import com.milasoraki.tokiefy.extractor.model.messaging.SendStickerRequest
  * wraps those details and will later own retry + optimistic-state rules.
  */
 public class MessageRepository(
-    private val messagingApi: TikTokMessagingApi = ServiceLocator.messagingApi,
+    private val messagingApi: TikTokMessagingApi,
 ) {
     /**
      * Fetches messages for the given conversation.
@@ -28,9 +28,7 @@ public class MessageRepository(
     public suspend fun fetchMessages(conversationId: String): List<DirectMessage> {
         val response: MessageListResponse = runCatching {
             messagingApi.listMessages(conversationId = conversationId)
-        }.getOrElse {
-            com.milasoraki.tokiefy.extractor.remote.mock.MockData.messages(conversationId)
-        }
+        }.getOrElse { MockData.messagesTyped(conversationId) }
         return response.messages.sortedBy { it.createTimeEpochSeconds }
     }
 

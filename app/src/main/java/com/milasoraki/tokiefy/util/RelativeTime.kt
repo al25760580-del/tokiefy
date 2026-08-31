@@ -19,9 +19,9 @@ import java.util.concurrent.TimeUnit
  */
 public object RelativeTime {
 
-    private const val MINUTE_SECONDS: Long = 60L
-    private const val HOUR_SECONDS: Long = TimeUnit.HOURS.toSeconds(1)
-    private const val DAY_SECONDS: Long = TimeUnit.DAYS.toSeconds(1)
+    private val MINUTE_SECONDS: Long = 60L
+    private val HOUR_SECONDS: Long = TimeUnit.HOURS.toSeconds(1)
+    private val DAY_SECONDS: Long = TimeUnit.DAYS.toSeconds(1)
 
     /**
      * Phrasing style that matches the surrounding UI copy.

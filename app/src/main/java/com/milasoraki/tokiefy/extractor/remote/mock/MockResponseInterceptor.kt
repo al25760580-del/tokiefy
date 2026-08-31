@@ -28,7 +28,7 @@ import okio.Buffer
  * real (snake_case) schema.
  */
 public class MockResponseInterceptor(
-    private val sessionHolder: SessionHolder = SessionHolder(Session()),
+    private val sessionHolder: SessionHolder = SessionHolder(),
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {

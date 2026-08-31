@@ -1,11 +1,10 @@
 package com.milasoraki.tokiefy.data
 
-import com.milasoraki.tokiefy.app.di.ServiceLocator
 import com.milasoraki.tokiefy.extractor.api.TikTokDiggApi
 import com.milasoraki.tokiefy.extractor.api.TikTokRelationApi
 
 /**
- * Fires one-off user interactions: like, unlike, save, follow, share.
+ * Fires one-off user interactions: like, unlike, save, follow.
  *
  * Why it exists:
  * Grouping fire-and-forget POSTs here keeps ViewModels small and avoids
@@ -13,8 +12,8 @@ import com.milasoraki.tokiefy.extractor.api.TikTokRelationApi
  * reconcile with server response) in every screen.
  */
 public class InteractionRepository(
-    private val diggApi: TikTokDiggApi = ServiceLocator.diggApi,
-    private val relationApi: TikTokRelationApi = ServiceLocator.relationApi,
+    private val diggApi: TikTokDiggApi,
+    private val relationApi: TikTokRelationApi,
 ) {
     public suspend fun like(awemeId: String) {
         runCatching { diggApi.digg(awemeId = awemeId, action = "digg") }

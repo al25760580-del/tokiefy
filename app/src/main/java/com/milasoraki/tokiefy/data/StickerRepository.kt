@@ -1,8 +1,8 @@
 package com.milasoraki.tokiefy.data
 
-import com.milasoraki.tokiefy.app.di.ServiceLocator
 import com.milasoraki.tokiefy.extractor.api.TikTokMessagingApi
 import com.milasoraki.tokiefy.extractor.model.sticker.StickerStoreResponse
+import com.milasoraki.tokiefy.extractor.remote.mock.MockData
 
 /**
  * Sticker store (packs and recent stickers) repository.
@@ -13,10 +13,10 @@ import com.milasoraki.tokiefy.extractor.model.sticker.StickerStoreResponse
  * access so the ViewModel doesn't have to know the endpoint path.
  */
 public class StickerRepository(
-    private val messagingApi: TikTokMessagingApi = ServiceLocator.messagingApi,
+    private val messagingApi: TikTokMessagingApi,
 ) {
     public suspend fun fetchStore(): StickerStoreResponse {
         return runCatching { messagingApi.stickerStore() }
-            .getOrElse { com.milasoraki.tokiefy.extractor.remote.mock.MockData.stickerStore() }
+            .getOrElse { MockData.STICKER_ENVELOPE }
     }
 }

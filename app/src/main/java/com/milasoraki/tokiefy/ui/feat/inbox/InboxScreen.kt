@@ -25,8 +25,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -187,7 +190,7 @@ private fun NotificationCard(notification: InboxNotification, onDismiss: () -> U
                     modifier = Modifier.size(48.dp).clip(CircleShape).background(TikTokPrimary),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Filled.Star, contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
+                    Icon(Icons.Filled.Notifications, contentDescription = stringResource(R.string.notifications), tint = Color.White, modifier = Modifier.size(26.dp))
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {

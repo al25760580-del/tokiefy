@@ -1,9 +1,9 @@
 package com.milasoraki.tokiefy.data
 
-import com.milasoraki.tokiefy.app.di.ServiceLocator
 import com.milasoraki.tokiefy.extractor.api.TikTokMessagingApi
 import com.milasoraki.tokiefy.extractor.model.messaging.Conversation
 import com.milasoraki.tokiefy.extractor.model.messaging.ConversationListResponse
+import com.milasoraki.tokiefy.extractor.remote.mock.MockData
 
 /**
  * Read access to the direct-message inbox conversation list.
@@ -15,7 +15,7 @@ import com.milasoraki.tokiefy.extractor.model.messaging.ConversationListResponse
  * pagination and caching are added later.
  */
 public class ConversationRepository(
-    private val messagingApi: TikTokMessagingApi = ServiceLocator.messagingApi,
+    private val messagingApi: TikTokMessagingApi,
 ) {
     /**
      * Fetches the latest page of conversations.
@@ -25,11 +25,7 @@ public class ConversationRepository(
     public suspend fun fetchConversations(): List<Conversation> {
         val response: ConversationListResponse = runCatching {
             messagingApi.listConversations()
-        }.getOrElse { error: Throwable ->
-            // TODO(NETWORK): surface retryable errors to the UI instead of
-            //  falling back to mock data silently.
-            com.milasoraki.tokiefy.extractor.remote.mock.MockData.conversations()
-        }
+        }.getOrElse { MockData.CONVERSATIONS_RESPONSE_TYPED }
         return response.conversations
     }
 }

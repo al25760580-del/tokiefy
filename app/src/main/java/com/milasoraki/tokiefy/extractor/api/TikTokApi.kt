@@ -39,7 +39,7 @@ public class TikTokApi(
             commonParams: CommonParamsInterceptor.Params = CommonParamsInterceptor.Params.default(),
         ): TikTokApi {
             val okHttpClient = OkHttpFactory.build(
-                commonParams = commonParams,
+                commonParams = CommonParamsInterceptor(commonParams),
                 sessionHeaders = SessionHeadersInterceptor(sessionHolder),
                 userAgent = UserAgentInterceptor(),
             )

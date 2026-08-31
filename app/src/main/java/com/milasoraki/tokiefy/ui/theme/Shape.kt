@@ -2,6 +2,7 @@ package com.milasoraki.tokiefy.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
+import androidx.compose.ui.unit.dp
 
 /**
  * Corner radius tokens for Material surfaces.

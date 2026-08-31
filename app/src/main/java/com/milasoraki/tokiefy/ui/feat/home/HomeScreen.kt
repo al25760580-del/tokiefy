@@ -130,8 +130,8 @@ private fun FeedVerticalPager(items: List<Aweme>) {
 private fun BoxScope.AwemeCard(item: Aweme) {
     var liked by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(false) }
-    AsyncImage(
-        model = item.video?.cover?.firstUrl() ?: "https://picsum.photos/seed/feed/400/700",
+        AsyncImage(
+            model = item.video?.cover?.urlList?.firstOrNull() ?: "https://picsum.photos/seed/feed/400/700",
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = Modifier.fillMaxSize(),

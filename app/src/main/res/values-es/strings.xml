@@ -35,6 +35,7 @@
     <string name="menu_search">Buscar</string>
     <string name="dismiss">Cerrar</string>
     <string name="action_camera">Cámara</string>
+    <string name="notifications">Notificaciones</string>
     <string name="banner_followers_title">Nuevos seguidores</string>
     <string name="banner_followers_body">Tienes nuevos seguidores esta semana</string>
     <string name="activity_title">Actividad</string>
