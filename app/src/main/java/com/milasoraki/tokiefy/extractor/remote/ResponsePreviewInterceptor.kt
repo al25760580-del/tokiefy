@@ -26,9 +26,14 @@ public class ResponsePreviewInterceptor : Interceptor {
         val newBody = bytes.toResponseBody(body.contentType())
         val rebuilt = response.newBuilder().body(newBody).build()
 
-        val firstByte = bytes[0]
-        val looksLikeJson = ct.contains("json") ||
-            (bytes.isNotEmpty() && (firstByte == '{'.code.toByte() || firstByte == '['.code.toByte()))
+        val looksLikeJson: Boolean = when {
+            ct.contains("json") -> true
+            bytes.isEmpty() -> true // nothing to flag as non-JSON
+            else -> {
+                val firstByte = bytes[0]
+                firstByte == '{'.code.toByte() || firstByte == '['.code.toByte()
+            }
+        }
 
         if (bytes.isNotEmpty() && (!response.isSuccessful || !looksLikeJson)) {
             val preview = String(bytes, 0, minOf(bytes.size, 300))

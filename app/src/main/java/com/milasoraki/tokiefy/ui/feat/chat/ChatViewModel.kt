@@ -2,7 +2,11 @@ package com.milasoraki.tokiefy.ui.feat.chat
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.milasoraki.tokiefy.app.di.ServiceLocator
 import com.milasoraki.tokiefy.data.ConversationRepository
 import com.milasoraki.tokiefy.data.MessageRepository
@@ -163,5 +167,21 @@ public class ChatViewModel(
          * recompositions so `LazyColumn` keys remain valid.
          */
         public const val SENDER_SELF: String = "me"
+
+        /**
+         * Factory that wires repositories from [ServiceLocator] so the
+         * default `viewModel()` Compose helper can construct this VM via
+         * its SavedStateHandle (required for navigation argument injection).
+         */
+        public val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                ChatViewModel(
+                    savedStateHandle = createSavedStateHandle(),
+                    messageRepository = ServiceLocator.messageRepository,
+                    conversationRepository = ServiceLocator.conversationRepository,
+                    stickerRepository = ServiceLocator.stickerRepository,
+                )
+            }
+        }
     }
 }

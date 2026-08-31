@@ -97,7 +97,7 @@ import com.milasoraki.tokiefy.ui.theme.TikTokSurfaceVariant
 public fun ChatScreen(
     conversationId: String,
     onBack: () -> Unit,
-    viewModel: ChatViewModel = viewModel(),
+    viewModel: ChatViewModel = viewModel(factory = ChatViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val conversation: Conversation? = uiState.conversation
