@@ -58,7 +58,11 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    // Extended Material icon set is required — ChatScreen and the feed
+    // side rail use icons that are not in material-icons-core (Mic, Send,
+    // Search Outlined, FavoriteBorder, Bookmark, PersonAdd, TrendingUp, …).
     implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.foundation:foundation")
     implementation("io.coil-kt:coil-compose:2.5.0")
 
