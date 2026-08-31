@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -126,7 +125,7 @@ private fun FeedVerticalPager(items: List<Aweme>) {
 }
 
 @Composable
-private fun BoxScope.AwemeCard(item: Aweme, isActive: Boolean) {
+private fun AwemeCard(item: Aweme, isActive: Boolean) {
     var liked by remember(item.awemeId) { mutableStateOf(false) }
     var saved by remember(item.awemeId) { mutableStateOf(false) }
     var paused by remember { mutableStateOf(false) }
