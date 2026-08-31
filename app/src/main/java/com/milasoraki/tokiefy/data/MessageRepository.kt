@@ -6,6 +6,7 @@ import com.milasoraki.tokiefy.extractor.model.messaging.MessageListResponse
 import com.milasoraki.tokiefy.extractor.model.messaging.SendMessageRequest
 import com.milasoraki.tokiefy.extractor.model.messaging.SendMessageResponse
 import com.milasoraki.tokiefy.extractor.model.messaging.SendStickerRequest
+import com.milasoraki.tokiefy.extractor.remote.NetworkDebugLogger
 import com.milasoraki.tokiefy.extractor.remote.mock.MockData
 
 /**
@@ -28,6 +29,8 @@ public class MessageRepository(
     public suspend fun fetchMessages(conversationId: String): List<DirectMessage> {
         val response: MessageListResponse = runCatching {
             messagingApi.listMessages(conversationId = conversationId)
+        }.onFailure { err ->
+            NetworkDebugLogger.recordError("messages/$conversationId: ${err.message}")
         }.getOrElse { MockData.messagesTyped(conversationId) }
         return response.messages.sortedBy { it.createTimeEpochSeconds }
     }

@@ -5,115 +5,115 @@ import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.Response
 import java.security.MessageDigest
+import java.util.UUID
 
 /**
- * Appends query parameters that every TikTok API request must carry.
+ * Appends query parameters that every native TikTok API request must
+ * carry. Values are taken from the live capture doc 15b (Pixel 5,
+ * TikTok 46.2.3, MX region, Latam unified).
  *
- * Why it exists:
- * Every request — even unauthenticated ones — requires `aid`, `device_id`,
- * `cdid`, `openudid`, `channel`, `os_api` etc. Centralising them in an
- * interceptor guarantees Retrofit interfaces stay clean and every call
- * sends a consistent set of parameters.
- *
- * Trade-offs:
- * | Approach                         | Pros                           | Cons                              |
- * |----------------------------------|--------------------------------|-----------------------------------|
- * | Interceptor (chosen)             | One place; can't be forgotten  | Harder to override per-call       |
- * | @Query on each Retrofit method   | Explicit per-call              | Boilerplate; easy to miss one     |
- * | OkHttp `addQueryParameter` util  | Similar to interceptor         | Duplicates across clients         |
- *
- * @param params  precomputed stable identifiers (device id, openudid …).
+ * Why an interceptor and not @Query on each Retrofit method: these
+ * keys are identical across hundreds of endpoints; centralising them
+ * guarantees none is omitted and lets us tweak a single constant when
+ * a build bump is required.
  */
 public class CommonParamsInterceptor(
     private val params: Params,
 ) : Interceptor {
 
-    /**
-     * Stable identifiers used as common query parameters.
-     *
-     * @property cdid        Per-request unique identifier generated as the
-     *                       MD5 of a timestamp; ensures each request carries
-     *                       distinct query parameters so the server does not
-     *                       reject it as a replay.
-     * @property openudid    Stable per-install identifier persisted across
-     *                       launches via encrypted preferences; prevents the
-     *                       installation from looking like a brand-new device
-     *                       on every cold start.
-     * @property deviceId    Synthetic numeric device id required by feed and
-     *                       relation endpoints that expect an IMEI/IDFA-like
-     *                       stable value.
-     * @property channel     Distribution channel (Play Store, APKPure, etc.).
-     *                       Defaults to `"googleplay"`.
-     * @property appVersion  Application version sent with every request; kept
-     *                       in sync with Gradle's `versionName`.
-     * @property versionCode Numeric internal version; the backend compares
-     *                       this (not [appVersion]) to gate features.
-     * @property aid         Application id on TikTok's servers. `1180` maps
-     *                       to the international Android build; other values
-     *                       target Douyin or TikTok Lite.
-     * @property osApi       Android SDK level; drives codec and ad-format
-     *                       selection server-side.
-     * @property deviceType  Device model as reported by `Build.MODEL`.
-     * @property buildNumber Internal build tag including the channel suffix;
-     *                       surfaced in server diagnostics.
-     */
     public data class Params(
         val cdid: String,
         val openudid: String,
         val deviceId: Long,
+        val installId: Long,
         val channel: String,
         val appVersion: String,
-        val versionCode: Long,
+        val versionCode: Int,
+        val updateVersionCode: Long,
         val aid: Int,
+        val appName: String,
         val osApi: Int,
+        val osVersion: String,
         val deviceType: String,
-        val buildNumber: String,
+        val deviceBrand: String,
+        val resolution: String,
+        val dpi: Int,
+        val language: String,
+        val region: String,
+        val timezoneName: String,
+        val timezoneOffset: Int,
     ) {
         public companion object {
-            /** Builds a sane default parameter set for development builds. */
             public fun default(): Params = Params(
-                cdid = freshCdid(),
-                openudid = "0a1b2c3d4e5f6789",
-                deviceId = 7348912345678901234L,
+                cdid = UUID.randomUUID().toString().replace("-", ""),
+                openudid = "c581ff1403a2feb5",
+                deviceId = 7680012345678901285L,
+                installId = 7680012345678901240L,
                 channel = "googleplay",
                 appVersion = TikTokAppIds.VERSION_NAME,
-                versionCode = TikTokAppIds.VERSION_CODE.toLong(),
+                versionCode = TikTokAppIds.VERSION_CODE,
+                updateVersionCode = TikTokAppIds.UPDATE_VERSION_CODE,
                 aid = TikTokAppIds.AID,
-                osApi = 33,
-                deviceType = "Pixel 7",
-                buildNumber = "${TikTokAppIds.VERSION_NAME}_${TikTokAppIds.VERSION_CODE}",
+                appName = TikTokAppIds.APP_NAME,
+                osApi = 36,
+                osVersion = "16",
+                deviceType = "Pixel 5",
+                deviceBrand = "google",
+                resolution = "1080*2340",
+                dpi = 430,
+                language = "es",
+                region = "MX",
+                timezoneName = "America/Tijuana",
+                timezoneOffset = -28800,
             )
         }
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
+        val nowSec = (System.currentTimeMillis() / 1000)
+        val nowMs = System.currentTimeMillis()
         val url: HttpUrl = original.url.newBuilder()
             .addQueryParameter("aid", params.aid.toString())
-            .addQueryParameter("app_name", TikTokAppIds.APP_NAME)
+            .addQueryParameter("app_name", params.appName)
             .addQueryParameter("version_code", params.versionCode.toString())
             .addQueryParameter("version_name", params.appVersion)
+            .addQueryParameter("update_version_code", params.updateVersionCode.toString())
+            .addQueryParameter("manifest_version_code", params.versionCode.toString())
+            .addQueryParameter("app_version", params.updateVersionCode.toString())
             .addQueryParameter("device_platform", "android")
-            .addQueryParameter("os_version", "13")
+            .addQueryParameter("os", "android")
+            .addQueryParameter("os_version", params.osVersion)
             .addQueryParameter("os_api", params.osApi.toString())
             .addQueryParameter("device_type", params.deviceType)
+            .addQueryParameter("device_brand", params.deviceBrand)
             .addQueryParameter("device_id", params.deviceId.toString())
+            .addQueryParameter("iid", params.installId.toString())
             .addQueryParameter("openudid", params.openudid)
-            .addQueryParameter("cdid", freshCdid())
+            .addQueryParameter("cdid", params.cdid)
             .addQueryParameter("channel", params.channel)
-            .addQueryParameter("build_number", params.buildNumber)
-            .addQueryParameter("manifest_version_code", params.versionCode.toString())
-            .addQueryParameter("update_version_code", params.versionCode.toString())
+            .addQueryParameter("resolution", params.resolution)
+            .addQueryParameter("dpi", params.dpi.toString())
+            .addQueryParameter("ac", "wifi")
+            .addQueryParameter("ac2", "wifi")
+            .addQueryParameter("is_pad", "0")
+            .addQueryParameter("current_region", params.region)
+            .addQueryParameter("residence", params.region)
+            .addQueryParameter("op_region", params.region)
+            .addQueryParameter("sys_region", "US")
+            .addQueryParameter("language", params.language)
+            .addQueryParameter("app_language", params.language)
+            .addQueryParameter("os_language", params.language)
+            .addQueryParameter("locale", "es-419")
+            .addQueryParameter("timezone_name", params.timezoneName)
+            .addQueryParameter("timezone_offset", params.timezoneOffset.toString())
+            .addQueryParameter("app_type", "normal")
+            .addQueryParameter("ssmix", "a")
+            .addQueryParameter("ts", nowSec.toString())
+            .addQueryParameter("_rticket", nowMs.toString())
+            .addQueryParameter("host_abi", "arm64-v8a")
+            .addQueryParameter("uoo", "1")
             .build()
         return chain.proceed(original.newBuilder().url(url).build())
-    }
-
-    public companion object {
-        /** Generates a fresh `cdid` per request, matching official client behaviour. */
-        public fun freshCdid(): String {
-            val md = MessageDigest.getInstance("MD5")
-            val digest = md.digest(System.nanoTime().toString().toByteArray())
-            return digest.joinToString("") { "%02x".format(it) }
-        }
     }
 }

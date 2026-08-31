@@ -3,6 +3,7 @@ package com.milasoraki.tokiefy.data
 import com.milasoraki.tokiefy.extractor.api.TikTokMessagingApi
 import com.milasoraki.tokiefy.extractor.model.messaging.Conversation
 import com.milasoraki.tokiefy.extractor.model.messaging.ConversationListResponse
+import com.milasoraki.tokiefy.extractor.remote.NetworkDebugLogger
 import com.milasoraki.tokiefy.extractor.remote.mock.MockData
 
 /**
@@ -25,6 +26,8 @@ public class ConversationRepository(
     public suspend fun fetchConversations(): List<Conversation> {
         val response: ConversationListResponse = runCatching {
             messagingApi.listConversations()
+        }.onFailure { err ->
+            NetworkDebugLogger.recordError("conversations/list: ${err.message}")
         }.getOrElse { MockData.CONVERSATIONS_RESPONSE_TYPED }
         return response.conversations
     }

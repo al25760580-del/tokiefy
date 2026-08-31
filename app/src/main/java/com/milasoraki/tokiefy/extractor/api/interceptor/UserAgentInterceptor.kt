@@ -1,25 +1,25 @@
 package com.milasoraki.tokiefy.extractor.api.interceptor
 
+import com.milasoraki.tokiefy.extractor.api.TikTokAppIds
 import okhttp3.Interceptor
 import okhttp3.Response
 
 /**
- * Sets a realistic Android User-Agent for all requests.
+ * Sets an in-app User-Agent matching the TikTok 46.2.3 (build 460203)
+ * Google Play arm64 Android client captured in doc 15b.
  *
- * Why it exists:
- * The `aweme/v1/...` endpoints return a different payload (sometimes an
- * HTML page) when the UA looks like a desktop browser or the default
- * Retrofit/OkHttp identifier. A hardcoded mobile UA is sufficient during
- * development; in production it must match the one that `com.zhiliaoapp`
- * emits for the running OS version.
+ * The UA string is what the real app emits; using it avoids being
+ * fingerprinted as a stale/unknown client. Native `api*.tiktokv.com`
+ * endpoints validate the UA family in addition to the `aid` parameter.
  */
 public class UserAgentInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
+        val ua = "com.zhiliaoapp.musically/${TikTokAppIds.VERSION_CODE} " +
+            "(Linux; U; Android 13; en_US; Pixel 5; " +
+            "Build/TQ3A.230901.001; Cronet/TTNetVersion:b4d74d15 2026-08-31)"
         val request = chain.request().newBuilder()
-            .header(
-                "User-Agent",
-                "com.zhiliaoapp.musically/2023501030 (Linux; U; Android 13; en_US; Pixel 7; Build/TQ3A.230901.001; Cronet/TTNetVersion:b4d74d15 2023-09-01)",
-            )
+            .header("User-Agent", ua)
+            .header("Accept-Encoding", "gzip, br, deflate")
             .build()
         return chain.proceed(request)
     }

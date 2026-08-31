@@ -8,61 +8,46 @@ import com.milasoraki.tokiefy.extractor.remote.OkHttpFactory
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import java.util.concurrent.TimeUnit
 
 /**
  * Root Retrofit aggregator for TikTok's HTTP API.
  *
- * Why it exists:
- * The API surface is split across several Retrofit sub-interfaces
- * (feed, digg, relation, messaging) so each can stay focused on one
- * domain. This class is the single place that wires them to a shared
- * OkHttp client and Moshi converter, mirroring the NewPipe/Xtra pattern
- * of an ISP-style aggregator.
+ * Two HTTP clients coexist (see OkHttpFactory KDoc for the rationale):
+ *   - [nativeClient] targets `api*.tiktokv.com` (app lanes). It carries
+ *     the in-app UA, device params, body-integrity interceptor, and is
+ *     currently intercepted by MockResponseInterceptor whenever
+ *     [OkHttpFactory.isProductionReady] is false, because these lanes
+ *     require X-Argus/X-Ladon signing (doc 15b).
+ *   - [webClient] targets `www.tiktok.com` (browser lanes) with a
+ *     mobile Chrome UA and Referer. Used for endpoints that accept
+ *     the web sessionid we capture via the embedded WebView login.
  *
- * Two HTTP clients are maintained in parallel:
- *   - [nativeClient] targets `api.tiktokv.com` and carries the in-app UA
- *     + common device params required by Digg/Relation/IM. It requires
- *     X-Argus signing to return real data and stays mock-gated behind
- *     [com.milasoraki.tokiefy.extractor.remote.OkHttpFactory.isProductionReady].
- *   - [webClient] targets `www.tiktok.com` with a browser UA and
- *     Referer. It is used for the web For-You/PFY feed, which is the
- *     endpoint that accepts the browser `sessionid` captured by the
- *     embedded WebView login without requiring X-Argus.
- *
- * Trade-offs vs alternatives:
- *
- * | Option               | Pros                           | Cons                                |
- * |----------------------|--------------------------------|-------------------------------------|
- * | ISP-style (this)     | Each sub-API small; easy mock  | One extra object holding them       |
- * | Single Retrofit iface| Fewer files                    | God interface; hard to read         |
- * | Per-screen Retrofit  | Max isolation                  | Duplicated clients, more allocations|
+ * Feed is bound from the web client today because `/api/recommend/
+ * item_list/` returns the real For-You feed with just a browser cookie.
  */
 public class TikTokApi(
-    public val feed: TikTokFeedApi,
-    public val webFeed: TikTokWebFeedApi,
+    public val feed: TikTokWebFeedApi,
+    public val nativeFeed: TikTokFeedApi,
     public val digg: TikTokDiggApi,
     public val relation: TikTokRelationApi,
     public val messaging: TikTokMessagingApi,
+    public val account: TikTokAccountApi,
 ) {
     public companion object {
-        /** Builds the production API instance with all required interceptors. */
         public fun create(
             sessionHolder: SessionHolder = SessionHolder(),
             commonParams: CommonParamsInterceptor.Params = CommonParamsInterceptor.Params.default(),
         ): TikTokApi {
-            val nativeClient: OkHttpClient = OkHttpFactory.build(
+            val sessionHeaders = SessionHeadersInterceptor(sessionHolder)
+            val nativeClient: OkHttpClient = OkHttpFactory.buildNative(
                 commonParams = CommonParamsInterceptor(commonParams),
-                sessionHeaders = SessionHeadersInterceptor(sessionHolder),
+                sessionHeaders = sessionHeaders,
                 userAgent = UserAgentInterceptor(),
             )
-            val webClient: OkHttpClient = OkHttpClient.Builder()
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(15, TimeUnit.SECONDS)
-                .writeTimeout(15, TimeUnit.SECONDS)
-                .addInterceptor(BrowserHeadersInterceptor())
-                .addInterceptor(SessionHeadersInterceptor(sessionHolder))
-                .build()
+            val webClient: OkHttpClient = OkHttpFactory.buildWeb(
+                sessionHeaders = sessionHeaders,
+                browserHeaders = BrowserHeadersInterceptor(),
+            )
 
             val nativeRetrofit = Retrofit.Builder()
                 .baseUrl(TikTokEndpoints.BASE_NATIVE_URL)
@@ -75,11 +60,12 @@ public class TikTokApi(
                 .addConverterFactory(MoshiConverterFactory.create())
                 .build()
             return TikTokApi(
-                feed = nativeRetrofit.create(TikTokFeedApi::class.java),
-                webFeed = webRetrofit.create(TikTokWebFeedApi::class.java),
+                feed = webRetrofit.create(TikTokWebFeedApi::class.java),
+                nativeFeed = nativeRetrofit.create(TikTokFeedApi::class.java),
                 digg = nativeRetrofit.create(TikTokDiggApi::class.java),
                 relation = nativeRetrofit.create(TikTokRelationApi::class.java),
                 messaging = nativeRetrofit.create(TikTokMessagingApi::class.java),
+                account = nativeRetrofit.create(TikTokAccountApi::class.java),
             )
         }
     }

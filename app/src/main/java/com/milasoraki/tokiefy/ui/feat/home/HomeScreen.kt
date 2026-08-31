@@ -40,6 +40,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,10 +57,13 @@ import coil.compose.AsyncImage
 import com.milasoraki.tokiefy.R
 import com.milasoraki.tokiefy.app.di.ServiceLocator
 import com.milasoraki.tokiefy.data.FeedResult
+import com.milasoraki.tokiefy.data.InteractionRepository
+import kotlinx.coroutines.launch
 import com.milasoraki.tokiefy.extractor.model.feed.Aweme
 import com.milasoraki.tokiefy.extractor.model.feed.coverUrl
 import com.milasoraki.tokiefy.extractor.model.feed.playUrl
 import com.milasoraki.tokiefy.ui.components.Avatar
+import com.milasoraki.tokiefy.ui.components.DebugConsole
 import com.milasoraki.tokiefy.ui.components.VideoPlayer
 import com.milasoraki.tokiefy.ui.theme.TikTokPrimary
 
@@ -83,9 +87,16 @@ public fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             wasLoggedIn = nowLoggedIn
         }
     }
+    var debugOpen by remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         FeedTopTabs()
         SourceChip(source = uiState.source, modifier = Modifier.align(Alignment.TopEnd))
+        DebugConsole(
+            open = debugOpen,
+            onToggle = { debugOpen = !debugOpen },
+            modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(start = 4.dp, top = 4.dp),
+        )
         uiState.statusText?.let { msg ->
             Text(
                 text = msg,
@@ -176,7 +187,10 @@ private fun FeedVerticalPager(items: List<Aweme>) {
 
 @Composable
 private fun AwemeCard(item: Aweme, isActive: Boolean) {
+    val scope = rememberCoroutineScope()
+    val interactions: InteractionRepository = remember { ServiceLocator.interactionRepository }
     var liked by remember(item.awemeId) { mutableStateOf(false) }
+    var following by remember(item.author?.uniqueId) { mutableStateOf(false) }
     var saved by remember(item.awemeId) { mutableStateOf(false) }
     var paused by remember { mutableStateOf(false) }
 
@@ -244,14 +258,24 @@ private fun AwemeCard(item: Aweme, isActive: Boolean) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
-                    onClick = { /* TODO(RELATION): follow */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = TikTokPrimary),
+                    onClick = {
+                        following = !following
+                        val uid = item.author?.numericId().orEmpty()
+                        val sec = item.author?.secUid.orEmpty()
+                        scope.launch {
+                            if (following) interactions.follow(uid, sec)
+                            else interactions.unfollow(uid, sec)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (following) Color.White.copy(alpha = 0.2f) else TikTokPrimary,
+                    ),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 2.dp),
                     shape = RoundedCornerShape(4.dp),
                     modifier = Modifier.height(26.dp),
                 ) {
                     Text(
-                        stringResource(R.string.action_follow),
+                        if (following) "✓" else stringResource(R.string.action_follow),
                         color = Color.White,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -279,7 +303,13 @@ private fun AwemeCard(item: Aweme, isActive: Boolean) {
                 .padding(bottom = 80.dp, end = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            IconButton(onClick = { liked = !liked }) {
+            IconButton(onClick = {
+                liked = !liked
+                scope.launch {
+                    if (liked) interactions.like(item.awemeId)
+                    else interactions.unlike(item.awemeId)
+                }
+            }) {
                 Icon(
                     imageVector = if (liked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                     contentDescription = null,

@@ -102,4 +102,6 @@ story</string>
     <string name="login_web_action_back">Back to options</string>
     <string name="login_web_success">Signed in as @%1$s!</string>
     <string name="login_action_signin_web">Sign in with browser (recommended)</string>
+    <string name="profile_loading">Loading profile…</string>
+    <string name="profile_logout">Log out</string>
 </resources>

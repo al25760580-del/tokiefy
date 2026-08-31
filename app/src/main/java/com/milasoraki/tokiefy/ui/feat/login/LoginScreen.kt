@@ -101,9 +101,9 @@ public fun LoginScreen(
         LoginMode.Web -> WebLoginContent(
             loading = state.webLoading,
             capturedUsername = state.capturedUsername,
-            onSessionCaptured = { sid, uid, csrf, secUid ->
+            onSessionCaptured = { handle ->
                 scope.launch {
-                    viewModel.saveCapturedSession(sid, uid, csrf, secUid)
+                    viewModel.saveCapturedSession(handle)
                     onContinue()
                 }
             },
@@ -263,7 +263,7 @@ private fun ManualContent(
 private fun WebLoginContent(
     loading: Boolean,
     capturedUsername: String?,
-    onSessionCaptured: (sessionId: String, uid: String, csrf: String, secUid: String) -> Unit,
+        onSessionCaptured: (handle: String?) -> Unit,
     onBack: () -> Unit,
     onGoManual: () -> Unit,
 ) {
@@ -335,23 +335,16 @@ private fun WebLoginContent(
                                 val raw: String = cm.getCookie("https://www.tiktok.com").orEmpty()
                                 val cookies: Map<String, String> = parseCookies(raw)
                                 val sid: String = cookies["sessionid"].orEmpty()
-                                // TikTok sets sessionid to an empty or "0" value until login completes;
-                                // only treat it as valid when it is a non-trivial alphanumeric string.
                                 if (sid.length >= 16 && sid != "0") {
                                     alreadyCaptured = true
-                                    val uid = cookies["uid"].orEmpty()
-                                    val csrf = cookies["csrftoken"].orEmpty()
-                                    val secUid = cookies["secUid"].orEmpty()
                                     // Try to scrape @handle from the page title once the feed loads.
                                     var handle: String? = null
                                     view?.title?.let { title ->
                                         val m = Regex("""@([A-Za-z0-9_.]+)""").find(title)
                                         handle = m?.groupValues?.get(1)
                                     }
-                                    // Stop loading so the WebView doesn't continue making calls after
-                                    // we've stolen the session; then hand off.
                                     stopLoading()
-                                    onSessionCaptured(sid, uid, csrf, handle ?: secUid)
+                                    onSessionCaptured(handle)
                                 }
                             }
 
@@ -435,15 +428,11 @@ public class LoginViewModel(application: Application) : AndroidViewModel(applica
         _uiState.value = _uiState.value.copy(sessionId = value.trim(), error = null)
     }
 
-    /** Saves a session captured by the embedded WebView. */
-    public suspend fun saveCapturedSession(
-        sessionId: String,
-        uid: String,
-        csrf: String,
-        secUid: String,
-    ) {
-        sessionManager.saveSession(sessionId = sessionId, uid = uid, csrf = csrf, secUid = secUid)
-        _uiState.value = _uiState.value.copy(capturedUsername = secUid.ifBlank { uid })
+    /** Saves a session captured by the embedded WebView by reading all cookies from the WebView cookie jar. */
+    public suspend fun saveCapturedSession(handle: String?) {
+        sessionManager.saveFromWebView(handleHint = handle.orEmpty())
+        val session = sessionManager.current()
+        _uiState.value = _uiState.value.copy(capturedUsername = handle ?: session.userId)
     }
 
     /** Validates and persists the manually-pasted sessionid; returns true on success. */

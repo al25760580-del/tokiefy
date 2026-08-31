@@ -2,6 +2,7 @@ package com.milasoraki.tokiefy.data
 
 import com.milasoraki.tokiefy.extractor.api.TikTokMessagingApi
 import com.milasoraki.tokiefy.extractor.model.sticker.StickerStoreResponse
+import com.milasoraki.tokiefy.extractor.remote.NetworkDebugLogger
 import com.milasoraki.tokiefy.extractor.remote.mock.MockData
 
 /**
@@ -17,6 +18,7 @@ public class StickerRepository(
 ) {
     public suspend fun fetchStore(): StickerStoreResponse {
         return runCatching { messagingApi.stickerStore() }
+            .onFailure { err -> NetworkDebugLogger.recordError("sticker/store: ${err.message}") }
             .getOrElse { MockData.STICKER_ENVELOPE }
     }
 }

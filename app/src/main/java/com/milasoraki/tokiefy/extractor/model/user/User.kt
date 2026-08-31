@@ -14,11 +14,15 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 public data class User(
     @Json(name = "uid") val uid: String = "",
+    @Json(name = "id") val id: String = "",
+    @Json(name = "sec_uid") val secUid: String? = null,
     @Json(name = "unique_id") val uniqueId: String = "",
     @Json(name = "nickname") val nickname: String = "",
     @Json(name = "avatar_thumb") val avatarThumb: ImageUrl? = null,
     @Json(name = "follower_count") val followerCount: Int = 0,
 ) {
+    /** Numeric user id as the server expects it (either `uid` or `id`). */
+    public fun numericId(): String = uid.ifBlank { id }
     /** Returns the first available avatar URL or null. */
     public fun avatarUrl(): String? = avatarThumb?.urlList?.firstOrNull()
 }

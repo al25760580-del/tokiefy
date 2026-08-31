@@ -102,4 +102,6 @@ historia</string>
     <string name="login_web_action_back">Volver a opciones</string>
     <string name="login_web_success">¡Sesión iniciada como @%1$s!</string>
     <string name="login_action_signin_web">Iniciar sesión con navegador (recomendado)</string>
+    <string name="profile_loading">Cargando perfil…</string>
+    <string name="profile_logout">Cerrar sesión</string>
 </resources>
