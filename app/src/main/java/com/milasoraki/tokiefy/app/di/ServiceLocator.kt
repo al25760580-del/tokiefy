@@ -71,7 +71,7 @@ public object ServiceLocator {
         sessionHolder = SessionHolder()
         api = TikTokApi.create(sessionHolder = sessionHolder)
 
-        feedRepository = FeedRepository(api.feed)
+        feedRepository = FeedRepository(api.feed, api.webFeed)
         conversationRepository = ConversationRepository(api.messaging)
         messageRepository = MessageRepository(api.messaging)
         stickerRepository = StickerRepository(api.messaging)

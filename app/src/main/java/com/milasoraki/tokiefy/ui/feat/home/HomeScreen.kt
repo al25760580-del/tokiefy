@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.milasoraki.tokiefy.R
+import com.milasoraki.tokiefy.app.di.ServiceLocator
+import com.milasoraki.tokiefy.data.FeedResult
 import com.milasoraki.tokiefy.extractor.model.feed.Aweme
 import com.milasoraki.tokiefy.extractor.model.feed.coverUrl
 import com.milasoraki.tokiefy.extractor.model.feed.playUrl
@@ -65,8 +67,33 @@ import com.milasoraki.tokiefy.ui.theme.TikTokPrimary
 @Composable
 public fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    // Whenever the session flips from unauthenticated → authenticated
+    // (i.e. right after the WebView grabs a cookie), re-fetch the feed so
+    // the LIVE data replaces the SAMPLE cards without needing an app restart.
+    LaunchedEffect(Unit) {
+        val loggedIn = ServiceLocator.sessionManager.isLoggedIn()
+        ServiceLocator.sessionManager.session.collect { session ->
+            val nowLoggedIn = session.cookies.any { it.name == "sessionid" && it.value.length >= 16 && it.value != "0" }
+            if (nowLoggedIn != loggedIn) {
+                viewModel.refresh()
+            }
+        }
+    }
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         FeedTopTabs()
+        SourceChip(source = uiState.source, modifier = Modifier.align(Alignment.TopEnd))
+        uiState.statusText?.let { msg ->
+            Text(
+                text = msg,
+                color = Color.White.copy(alpha = 0.75f),
+                fontSize = 11.sp,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .background(Color.Black.copy(alpha = 0.55f))
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+        }
         when {
             uiState.isLoading && uiState.items.isEmpty() -> CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
@@ -79,6 +106,25 @@ public fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             )
             else -> FeedVerticalPager(items = uiState.items)
         }
+    }
+}
+
+@Composable
+private fun SourceChip(source: FeedResult.Source, modifier: Modifier = Modifier) {
+    val (label, color) = when (source) {
+        FeedResult.Source.WEB_LIVE -> "LIVE" to TikTokPrimary
+        FeedResult.Source.NATIVE_LIVE -> "LIVE (app)" to TikTokPrimary
+        FeedResult.Source.MOCK -> "SAMPLE" to Color.White.copy(alpha = 0.55f)
+    }
+    Box(
+        modifier = modifier
+            .statusBarsPadding()
+            .padding(top = 12.dp, end = 12.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(color.copy(alpha = 0.25f))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+    ) {
+        Text(label, color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold)
     }
 }
 
