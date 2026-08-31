@@ -11,13 +11,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,15 +37,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.milasoraki.tokiefy.R
 import com.milasoraki.tokiefy.app.di.ServiceLocator
 import com.milasoraki.tokiefy.extractor.api.AccountData
-import com.milasoraki.tokiefy.extractor.api.AccountInfoResponse
 import com.milasoraki.tokiefy.extractor.remote.NetworkDebugLogger
+import com.milasoraki.tokiefy.ui.components.DebugConsole
 import com.milasoraki.tokiefy.ui.theme.TikTokPrimary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,22 +54,25 @@ import kotlinx.coroutines.launch
 /**
  * Profile tab.
  *
- * Shows the currently logged-in user's avatar/handle (fetched from
- * `/passport/account/info/v2/` on first composition) plus a logout
- * button and a status line indicating whether we have an active
- * session. While unauthenticated we show a simpler placeholder and a
- * prompt to sign in.
+ * Fetches `/passport/account/info/v2/` over the **web** client so it
+ * works with the WebView-captured sessionid without needing native
+ * X-Argus signing. The debug bug is always visible in the top-left so
+ * the tester can inspect why a call failed even if the profile has
+ * not loaded yet.
  */
 @Composable
 public fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
     val state by viewModel.state.collectAsState()
     val scope = rememberCoroutineScope()
+    var debugOpen by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { viewModel.load() }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 60.dp, start = 24.dp, end = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             val account = state.account
@@ -78,28 +82,57 @@ public fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                 contentDescription = null,
                 modifier = Modifier.size(96.dp).clip(CircleShape),
             )
-            Text(
-                text = when {
-                    state.loading -> stringResource(R.string.profile_loading)
-                    account != null -> "@${account.uniqueId ?: account.nickname ?: "user"}"
-                    else -> stringResource(R.string.profile_title)
-                },
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
-            )
-            if (account != null) {
-                Text(
-                    text = "uid ${account.userId}",
-                    color = Color.White.copy(alpha = 0.5f),
-                    fontSize = 12.sp,
-                )
-            } else if (!state.loading) {
-                Text(
-                    text = stringResource(R.string.profile_subtitle),
-                    color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 14.sp,
-                )
+            when {
+                state.loading -> {
+                    Text(
+                        text = stringResource(R.string.profile_loading),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
+                    )
+                    CircularProgressIndicator(color = TikTokPrimary, modifier = Modifier.size(22.dp))
+                }
+                account != null -> {
+                    Text(
+                        text = "@${account.uniqueId ?: account.nickname ?: "user"}",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                    )
+                    Text(
+                        text = "uid ${account.userId}",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 12.sp,
+                    )
+                }
+                state.loggedIn -> {
+                    // Logged in but account info call failed — still show
+                    // the logout button so the user can retry or sign out.
+                    Text(
+                        text = stringResource(R.string.profile_title),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                    )
+                    Text(
+                        text = stringResource(R.string.profile_subtitle),
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontSize = 14.sp,
+                    )
+                }
+                else -> {
+                    Text(
+                        text = stringResource(R.string.profile_title),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 28.sp,
+                    )
+                    Text(
+                        text = stringResource(R.string.profile_subtitle),
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontSize = 14.sp,
+                    )
+                }
             }
             if (state.error != null) {
                 Text(
@@ -108,11 +141,8 @@ public fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                     fontSize = 12.sp,
                 )
             }
-            if (state.loading) {
-                CircularProgressIndicator(color = TikTokPrimary, modifier = Modifier.size(24.dp))
-            }
-            Spacer(Modifier.height(8.dp))
             if (state.loggedIn) {
+                Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = { scope.launch { viewModel.logout() } },
                     colors = ButtonDefaults.buttonColors(containerColor = TikTokPrimary),
@@ -123,6 +153,11 @@ public fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                 }
             }
         }
+        DebugConsole(
+            open = debugOpen,
+            onToggle = { debugOpen = !debugOpen },
+            modifier = Modifier.align(Alignment.TopStart).statusBarsPadding().padding(start = 4.dp, top = 4.dp),
+        )
     }
 }
 
@@ -148,20 +183,20 @@ public class ProfileViewModel(application: Application) : AndroidViewModel(appli
             }
             val result = runCatching { ServiceLocator.api.account.accountInfo() }
             result.onFailure { err ->
-                NetworkDebugLogger.recordError("account/info: ${err.message}")
-                _state.value = _state.value.copy(
-                    loading = false,
-                    error = err.message ?: "Failed to fetch profile",
-                )
+                NetworkDebugLogger.recordError("passport/account/info: ${err.message}")
+                val msg = err.message
+                    ?.substringBefore("\n")
+                    ?.take(120)
+                    ?: "Failed to fetch profile"
+                _state.value = _state.value.copy(loading = false, error = msg)
             }
-            result.onSuccess { resp: AccountInfoResponse ->
+            result.onSuccess { resp ->
                 if (resp.statusCode == 0 && resp.data != null) {
-                    _state.value = _state.value.copy(loading = false, account = resp.data)
+                    _state.value = _state.value.copy(loading = false, account = resp.data, error = null)
                 } else {
-                    _state.value = _state.value.copy(
-                        loading = false,
-                        error = "account/info status_code=${resp.statusCode}",
-                    )
+                    val msg = "account/info status_code=${resp.statusCode}"
+                    NetworkDebugLogger.recordError(msg)
+                    _state.value = _state.value.copy(loading = false, error = msg)
                 }
             }
         }

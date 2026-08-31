@@ -51,6 +51,7 @@ public object OkHttpFactory {
         userAgent: UserAgentInterceptor,
     ): OkHttpClient {
         val builder = baseBuilder()
+            .addInterceptor(ResponsePreviewInterceptor())
             .addInterceptor(userAgent)
             .addInterceptor(commonParams)
             .addInterceptor(sessionHeaders)
@@ -69,6 +70,7 @@ public object OkHttpFactory {
         browserHeaders: com.milasoraki.tokiefy.extractor.api.interceptor.BrowserHeadersInterceptor,
     ): OkHttpClient {
         return baseBuilder()
+            .addInterceptor(ResponsePreviewInterceptor())
             .addInterceptor(browserHeaders)
             .addInterceptor(sessionHeaders)
             .addInterceptor(CookieDomainBridgeInterceptor())
