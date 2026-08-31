@@ -76,7 +76,7 @@ public fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             val account = state.account
-            val avatarUrl = account?.avatarThumb?.urlList?.firstOrNull()
+            val avatarUrl = account?.avatar()
             AsyncImage(
                 model = avatarUrl ?: "https://picsum.photos/seed/me/120/120",
                 contentDescription = null,
@@ -94,16 +94,23 @@ public fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                 }
                 account != null -> {
                     Text(
-                        text = "@${account.uniqueId ?: account.nickname ?: "user"}",
+                        text = "@${account.handle() ?: "user"}",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp,
                     )
                     Text(
-                        text = "uid ${account.userId}",
+                        text = "uid ${account.resolvedUserId()}",
                         color = Color.White.copy(alpha = 0.5f),
                         fontSize = 12.sp,
                     )
+                    if (!account.email.isNullOrBlank()) {
+                        Text(
+                            text = account.email,
+                            color = Color.White.copy(alpha = 0.6f),
+                            fontSize = 12.sp,
+                        )
+                    }
                 }
                 state.loggedIn -> {
                     // Logged in but account info call failed — still show
@@ -191,10 +198,10 @@ public class ProfileViewModel(application: Application) : AndroidViewModel(appli
                 _state.value = _state.value.copy(loading = false, error = msg)
             }
             result.onSuccess { resp ->
-                if (resp.statusCode == 0 && resp.data != null) {
+                if (resp.isSuccess() && resp.data != null) {
                     _state.value = _state.value.copy(loading = false, account = resp.data, error = null)
                 } else {
-                    val msg = "account/info status_code=${resp.statusCode}"
+                    val msg = "account/info msg=${resp.message} code=${resp.statusCode}/${resp.errorCode}"
                     NetworkDebugLogger.recordError(msg)
                     _state.value = _state.value.copy(loading = false, error = msg)
                 }

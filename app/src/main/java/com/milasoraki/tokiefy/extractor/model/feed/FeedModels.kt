@@ -39,10 +39,18 @@ public data class Statistics(
 
 @JsonClass(generateAdapter = true)
 public data class FeedResponse(
+    @Json(name = "status_code") val statusCode: Int = 0,
+    @Json(name = "error_code") val errorCode: Int = 0,
+    @Json(name = "message") val message: String = "",
     @Json(name = "aweme_list") val awemes: List<Aweme> = emptyList(),
     @Json(name = "has_more") val hasMore: Boolean = false,
     @Json(name = "max_cursor") val maxCursor: Long = 0,
-)
+    @Json(name = "cursor") val cursor: Long = 0,
+) {
+    /** True if the payload is usable regardless of native/web envelope shape. */
+    public fun isSuccess(): Boolean = statusCode == 0 && errorCode == 0 &&
+        (message.isBlank() || message.equals("success", ignoreCase = true))
+}
 
 /** Returns the first available cover URL or null. */
 public fun Video.coverUrl(): String? = cover?.urlList?.firstOrNull()

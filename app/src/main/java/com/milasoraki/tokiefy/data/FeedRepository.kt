@@ -48,10 +48,12 @@ public class FeedRepository(
         if (loggedIn) {
             val web = runCatching { webFeedApi.forYou(count = count) }
             web.onSuccess { resp ->
-                if (resp.awemes.isNotEmpty()) {
+                if (resp.isSuccess() && resp.awemes.isNotEmpty()) {
                     return FeedResult(resp.awemes, FeedResult.Source.WEB_LIVE)
                 }
-                NetworkDebugLogger.recordError("web FYP returned 0 awemes")
+                NetworkDebugLogger.recordError(
+                    "web FYP code=${resp.statusCode}/${resp.errorCode} msg=${resp.message} awemes=${resp.awemes.size}",
+                )
             }
             web.onFailure { err ->
                 NetworkDebugLogger.recordError("web FYP failed: ${err.message}")
@@ -61,9 +63,12 @@ public class FeedRepository(
         if (OkHttpFactory.isProductionReady) {
             val native = runCatching { nativeFeedApi.forYou(count = count) }
             native.onSuccess { resp ->
-                if (resp.awemes.isNotEmpty()) {
+                if (resp.isSuccess() && resp.awemes.isNotEmpty()) {
                     return FeedResult(resp.awemes, FeedResult.Source.NATIVE_LIVE)
                 }
+                NetworkDebugLogger.recordError(
+                    "native FYP code=${resp.statusCode} awemes=${resp.awemes.size}",
+                )
             }
             native.onFailure { err ->
                 NetworkDebugLogger.recordError("native FYP failed: ${err.message}")

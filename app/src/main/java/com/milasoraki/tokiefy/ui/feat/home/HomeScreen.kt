@@ -90,6 +90,21 @@ public fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
     var debugOpen by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        // Video / loading layer is painted first so the overlays below
+        // (tabs, chips, debug button) appear on TOP of it, not under it.
+        when {
+            uiState.isLoading && uiState.items.isEmpty() -> CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = Color.White,
+            )
+            uiState.items.isEmpty() -> Text(
+                stringResource(R.string.feed_empty),
+                color = Color.White.copy(alpha = 0.6f),
+                modifier = Modifier.align(Alignment.Center),
+            )
+            else -> FeedVerticalPager(items = uiState.items)
+        }
+
         FeedTopTabs()
         SourceChip(source = uiState.source, modifier = Modifier.align(Alignment.TopEnd))
         DebugConsole(
@@ -108,18 +123,6 @@ public fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp),
             )
-        }
-        when {
-            uiState.isLoading && uiState.items.isEmpty() -> CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
-                color = Color.White,
-            )
-            uiState.items.isEmpty() -> Text(
-                stringResource(R.string.feed_empty),
-                color = Color.White.copy(alpha = 0.6f),
-                modifier = Modifier.align(Alignment.Center),
-            )
-            else -> FeedVerticalPager(items = uiState.items)
         }
     }
 }
