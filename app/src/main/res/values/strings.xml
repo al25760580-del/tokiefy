@@ -96,3 +96,10 @@ story</string>
     <string name="video_share_title">Susie\'s Idea</string>
     <string name="video_share_author">Ralsei</string>
 </resources>
+    <string name="login_web_title">Sign in with TikTok</string>
+    <string name="login_web_subtitle">Log in to TikTok inside this browser window — Tokiefy will grab your session automatically when the page finishes loading.</string>
+    <string name="login_web_loading">Loading TikTok…</string>
+    <string name="login_web_action_manual">Enter sessionid manually</string>
+    <string name="login_web_action_back">Back to options</string>
+    <string name="login_web_success">Signed in as @%1$s!</string>
+    <string name="login_action_signin_web">Sign in with browser (recommended)</string>
